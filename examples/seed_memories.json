@@ -1,0 +1,52 @@
+[
+  {
+    "text": "The user is building HoloMemory as a portfolio project.",
+    "kind": "fact",
+    "subject": "user",
+    "predicate": "is_building",
+    "object": "holomemory portfolio project",
+    "entities": ["user", "holomemory", "portfolio"],
+    "tags": ["project", "portfolio", "agent-memory"],
+    "trust": 0.95
+  },
+  {
+    "text": "The project uses FastAPI, SQLite, NumPy, and Next.js.",
+    "kind": "fact",
+    "subject": "project",
+    "predicate": "uses",
+    "object": "fastapi sqlite numpy nextjs",
+    "entities": ["project", "fastapi", "sqlite", "numpy", "nextjs"],
+    "tags": ["stack", "technology"],
+    "trust": 0.95
+  },
+  {
+    "text": "The user does not want Streamlit for the UI.",
+    "kind": "preference",
+    "subject": "user",
+    "predicate": "rejects",
+    "object": "streamlit",
+    "entities": ["user", "streamlit", "ui"],
+    "tags": ["preference", "ui"],
+    "trust": 0.9
+  },
+  {
+    "text": "The UI should feel like a polished developer tool.",
+    "kind": "preference",
+    "subject": "ui",
+    "predicate": "should_feel_like",
+    "object": "polished developer tool",
+    "entities": ["ui", "developer tool"],
+    "tags": ["preference", "design"],
+    "trust": 0.9
+  },
+  {
+    "text": "The memory engine uses HRR-style binding and superposition.",
+    "kind": "fact",
+    "subject": "memory engine",
+    "predicate": "uses",
+    "object": "hrr binding superposition",
+    "entities": ["memory engine", "hrr", "binding", "superposition"],
+    "tags": ["architecture", "hrr"],
+    "trust": 0.95
+  }
+]

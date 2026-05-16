@@ -1,0 +1,12 @@
+[
+  {"query": "What does the user prefer?", "expected_entity": "user"},
+  {"query": "What is the project about?", "expected_entity": "project"},
+  {"query": "What technology stack is used?", "expected_entity": "stack"},
+  {"query": "What UI framework is preferred?", "expected_entity": "ui"},
+  {"query": "How does the memory engine work?", "expected_entity": "memory"},
+  {"query": "What retrieval modes exist?", "expected_entity": "retrieval"},
+  {"query": "What is holographic memory?", "expected_entity": "holographic"},
+  {"query": "What database is used?", "expected_entity": "sqlite"},
+  {"query": "What are the user preferences?", "expected_entity": "user"},
+  {"query": "What is the benchmark comparing?", "expected_entity": "benchmark"}
+]

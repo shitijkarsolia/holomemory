@@ -1,0 +1,220 @@
+"""Holographic and hybrid retrieval strategies."""
+
+import time
+from dataclasses import dataclass, field
+
+import numpy as np
+from sqlalchemy.orm import Session
+
+from app.memory.encoder import build_query_probe, _tokenize
+from app.memory.hrr import cosine_similarity
+from app.memory.keyword import keyword_search
+from app.models import Memory
+from app.schemas import (
+    MemoryOut,
+    QueryResponse,
+    RetrievalResult,
+    ScoreComponents,
+)
+from app.services.memory_service import get_all_vectors, list_memories
+
+
+@dataclass
+class _ScoredMemory:
+    memory: Memory
+    holographic_score: float = 0.0
+    keyword_score: float = 0.0
+    trust_score: float = 0.0
+    entity_overlap: float = 0.0
+    final_score: float = 0.0
+    reasons: list[str] = field(default_factory=list)
+
+
+def query_memories(
+    db: Session,
+    query: str,
+    mode: str = "hybrid",
+    top_k: int = 5,
+) -> QueryResponse:
+    start = time.perf_counter()
+
+    memories = list_memories(db, status="active", limit=500)
+    if not memories:
+        elapsed = (time.perf_counter() - start) * 1000
+        return QueryResponse(query=query, mode=mode, latency_ms=elapsed, results=[])
+
+    query_tokens = _tokenize(query)
+
+    if mode == "keyword":
+        scored = _keyword_only(memories, query, query_tokens, top_k)
+    elif mode == "holographic":
+        scored = _holographic_only(db, memories, query, query_tokens, top_k)
+    else:
+        scored = _hybrid(db, memories, query, query_tokens, top_k)
+
+    elapsed = (time.perf_counter() - start) * 1000
+
+    results = []
+    for sm in scored[:top_k]:
+        results.append(RetrievalResult(
+            memory=MemoryOut.model_validate(sm.memory),
+            score=round(sm.final_score, 4),
+            components=ScoreComponents(
+                holographic=round(sm.holographic_score, 4),
+                keyword=round(sm.keyword_score, 4),
+                trust=round(sm.trust_score, 4),
+                entity_overlap=round(sm.entity_overlap, 4),
+            ),
+            why=sm.reasons,
+        ))
+
+    return QueryResponse(
+        query=query,
+        mode=mode,
+        latency_ms=round(elapsed, 2),
+        results=results,
+        debug={"query_symbols": query_tokens[:10], "dimension": 1024},
+    )
+
+
+def _keyword_only(
+    memories: list[Memory],
+    query: str,
+    query_tokens: list[str],
+    top_k: int,
+) -> list[_ScoredMemory]:
+    mem_dicts = [_mem_to_dict(m) for m in memories]
+    kw_results = keyword_search(query, mem_dicts, top_k=top_k * 2)
+    kw_map = {r.memory_id: r for r in kw_results}
+
+    scored = []
+    for mem in memories:
+        if mem.id not in kw_map:
+            continue
+        kr = kw_map[mem.id]
+        sm = _ScoredMemory(memory=mem)
+        sm.keyword_score = kr.score
+        sm.trust_score = mem.trust
+        sm.final_score = kr.score
+        sm.reasons = [f"Matched keywords: {', '.join(kr.matched_terms)}"]
+        if mem.trust >= 0.8:
+            sm.reasons.append(f"High trust: {mem.trust}")
+        scored.append(sm)
+
+    scored.sort(key=lambda s: s.final_score, reverse=True)
+    return scored[:top_k]
+
+
+def _holographic_only(
+    db: Session,
+    memories: list[Memory],
+    query: str,
+    query_tokens: list[str],
+    top_k: int,
+) -> list[_ScoredMemory]:
+    vectors = get_all_vectors(db)
+    probe = build_query_probe(query)
+
+    scored = []
+    for mem in memories:
+        vec = vectors.get(mem.id)
+        if vec is None:
+            continue
+        sim = cosine_similarity(probe, vec)
+        sm = _ScoredMemory(memory=mem)
+        sm.holographic_score = max(0.0, sim)
+        sm.trust_score = mem.trust
+        sm.final_score = max(0.0, sim)
+        if sim > 0.1:
+            sm.reasons.append(f"High holographic similarity: {sim:.3f}")
+        _add_entity_reasons(sm, mem, query_tokens)
+        scored.append(sm)
+
+    scored.sort(key=lambda s: s.final_score, reverse=True)
+    return scored[:top_k]
+
+
+def _hybrid(
+    db: Session,
+    memories: list[Memory],
+    query: str,
+    query_tokens: list[str],
+    top_k: int,
+) -> list[_ScoredMemory]:
+    vectors = get_all_vectors(db)
+    probe = build_query_probe(query)
+
+    mem_dicts = [_mem_to_dict(m) for m in memories]
+    kw_results = keyword_search(query, mem_dicts, top_k=len(memories))
+    kw_map = {r.memory_id: r for r in kw_results}
+
+    scored = []
+    for mem in memories:
+        sm = _ScoredMemory(memory=mem)
+
+        vec = vectors.get(mem.id)
+        if vec is not None:
+            sim = cosine_similarity(probe, vec)
+            sm.holographic_score = max(0.0, sim)
+
+        kr = kw_map.get(mem.id)
+        if kr:
+            sm.keyword_score = kr.score
+            sm.reasons.append(f"Matched keywords: {', '.join(kr.matched_terms)}")
+
+        sm.trust_score = mem.trust
+
+        entity_overlap = _compute_entity_overlap(mem, query_tokens)
+        sm.entity_overlap = entity_overlap
+
+        sm.final_score = (
+            0.4 * sm.holographic_score
+            + 0.3 * sm.keyword_score
+            + 0.15 * sm.trust_score
+            + 0.15 * sm.entity_overlap
+        )
+
+        if sm.holographic_score > 0.1:
+            sm.reasons.append(f"Holographic similarity: {sm.holographic_score:.3f}")
+        if sm.trust_score >= 0.8:
+            sm.reasons.append(f"Trust score: {sm.trust_score}")
+        if entity_overlap > 0:
+            sm.reasons.append(f"Entity overlap: {entity_overlap:.2f}")
+
+        scored.append(sm)
+
+    scored.sort(key=lambda s: s.final_score, reverse=True)
+    return scored[:top_k]
+
+
+def _compute_entity_overlap(mem: Memory, query_tokens: list[str]) -> float:
+    mem_entities = {e.lower() for e in (mem.entities or [])}
+    if mem.subject:
+        mem_entities.add(mem.subject.lower())
+    if mem.object:
+        mem_entities.add(mem.object.lower())
+
+    if not mem_entities or not query_tokens:
+        return 0.0
+
+    overlap = sum(1 for t in query_tokens if t in mem_entities)
+    return overlap / len(query_tokens)
+
+
+def _add_entity_reasons(sm: _ScoredMemory, mem: Memory, query_tokens: list[str]):
+    entities = {e.lower() for e in (mem.entities or [])}
+    matched = [t for t in query_tokens if t in entities]
+    if matched:
+        sm.reasons.append(f"Matched entities: {', '.join(matched)}")
+
+
+def _mem_to_dict(mem: Memory) -> dict:
+    return {
+        "id": mem.id,
+        "text": mem.text,
+        "entities": mem.entities or [],
+        "tags": mem.tags or [],
+        "subject": mem.subject,
+        "predicate": mem.predicate,
+        "object": mem.object,
+    }

@@ -33,7 +33,7 @@ export function HeroSection() {
             </span>
           </div>
 
-          <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
+          <h1 className="font-serif text-3xl tracking-tight md:text-4xl text-foreground">
             HoloMem Lab
           </h1>
           <p className="mt-3 text-base text-muted-foreground leading-relaxed max-w-lg">

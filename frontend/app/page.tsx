@@ -2,6 +2,7 @@
 
 import { HeroSection } from "@/components/explainer/hero";
 import { WhatSection } from "@/components/explainer/what-section";
+import { WhySection } from "@/components/explainer/why-section";
 import { EncodeBlock } from "@/components/explainer/encode-block";
 import { RecallBlock } from "@/components/explainer/recall-block";
 import { TrustBlock } from "@/components/explainer/trust-block";
@@ -13,6 +14,7 @@ export default function HomePage() {
     <div className="min-h-screen">
       <HeroSection />
       <WhatSection />
+      <WhySection />
       <EncodeBlock />
       <RecallBlock />
       <TrustBlock />

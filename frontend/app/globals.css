@@ -80,3 +80,28 @@
     @apply font-sans;
   }
 }
+
+@keyframes glitch {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-2px); }
+  40% { transform: translateX(2px); }
+  60% { transform: translateX(-1px); }
+  80% { transform: translateX(1px); }
+}
+
+.animate-glitch {
+  animation: glitch 0.3s ease-in-out infinite;
+}
+
+.glow-button {
+  box-shadow:
+    0 0 20px oklch(0.65 0.17 160 / 25%),
+    0 0 60px oklch(0.65 0.17 160 / 8%);
+  transition: box-shadow 0.3s ease;
+}
+
+.glow-button:hover {
+  box-shadow:
+    0 0 30px oklch(0.65 0.17 160 / 35%),
+    0 0 80px oklch(0.65 0.17 160 / 12%);
+}

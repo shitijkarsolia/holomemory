@@ -9,12 +9,21 @@ const TRIPLE = {
 
 const STRIP_CELLS = 36;
 const TRACE_CELLS = 64;
+const TRACE_DIMS = 1024;
 
-const SIGNAL = {
-  amber: "oklch(0.78 0.13 72)",
-  blue: "oklch(0.7 0.1 215)",
-  violet: "oklch(0.72 0.11 305)",
-} as const;
+type SignalColor = { l: number; c: number; h: number };
+
+const SIGNAL: Record<"amber" | "blue" | "violet", SignalColor> = {
+  amber: { l: 0.78, c: 0.13, h: 72 },
+  blue: { l: 0.7, c: 0.1, h: 215 },
+  violet: { l: 0.72, c: 0.11, h: 305 },
+};
+
+function oklch(color: SignalColor, alpha = 1): string {
+  return alpha >= 1
+    ? `oklch(${color.l} ${color.c} ${color.h})`
+    : `oklch(${color.l} ${color.c} ${color.h} / ${alpha})`;
+}
 
 function hash(seed: string, i: number): number {
   let h = 2166136261 ^ (i * 16777619);
@@ -40,10 +49,11 @@ function Strip({
   className = "",
 }: {
   amplitudes: number[];
-  color: string;
+  color: SignalColor;
   label: string;
   className?: string;
 }) {
+  const base = oklch(color);
   return (
     <div className={`flex items-center gap-3 ${className}`}>
       <span className="marginalia-label w-[68px] shrink-0 text-right">
@@ -55,13 +65,34 @@ function Strip({
             key={i}
             className="flex-1 rounded-[1px]"
             style={{
-              background: color,
+              background: base,
               opacity: Math.min(0.95, Math.max(0.08, a)),
             }}
           />
         ))}
       </div>
     </div>
+  );
+}
+
+function Pill({
+  color,
+  children,
+}: {
+  color: SignalColor;
+  children: React.ReactNode;
+}) {
+  return (
+    <span
+      className="w-fit rounded-md border px-2.5 py-1 font-medium"
+      style={{
+        borderColor: oklch(color, 0.4),
+        background: oklch(color, 0.1),
+        color: oklch(color),
+      }}
+    >
+      {children}
+    </span>
   );
 }
 
@@ -77,8 +108,8 @@ export function HeroDemo() {
     const max = Math.max(s, p, o);
     const color =
       max === s ? SIGNAL.amber : max === p ? SIGNAL.blue : SIGNAL.violet;
-    const amplitude = 0.25 + (s + p + o) / 3 * 0.7;
-    return { color, amplitude };
+    const amplitude = 0.25 + ((s + p + o) / 3) * 0.7;
+    return { color: oklch(color), amplitude };
   });
 
   return (
@@ -91,7 +122,7 @@ export function HeroDemo() {
           Figure 1 · Encode then probe
         </p>
         <span className="font-mono text-[10px] text-muted-foreground/70">
-          dim 1024
+          dim {TRACE_DIMS}
         </span>
       </header>
 
@@ -104,38 +135,11 @@ export function HeroDemo() {
 
       <div className="grid grid-cols-[68px_1fr] gap-x-3 gap-y-1.5 text-sm">
         <span className="marginalia-label self-center text-right">subject</span>
-        <span
-          className="w-fit rounded-md border px-2.5 py-1 font-medium"
-          style={{
-            borderColor: `${SIGNAL.amber}66`,
-            background: `${SIGNAL.amber}1a`,
-            color: SIGNAL.amber,
-          }}
-        >
-          {TRIPLE.subject}
-        </span>
+        <Pill color={SIGNAL.amber}>{TRIPLE.subject}</Pill>
         <span className="marginalia-label self-center text-right">predicate</span>
-        <span
-          className="w-fit rounded-md border px-2.5 py-1 font-medium"
-          style={{
-            borderColor: `${SIGNAL.blue}66`,
-            background: `${SIGNAL.blue}1a`,
-            color: SIGNAL.blue,
-          }}
-        >
-          {TRIPLE.predicate}
-        </span>
+        <Pill color={SIGNAL.blue}>{TRIPLE.predicate}</Pill>
         <span className="marginalia-label self-center text-right">object</span>
-        <span
-          className="w-fit rounded-md border px-2.5 py-1 font-medium"
-          style={{
-            borderColor: `${SIGNAL.violet}66`,
-            background: `${SIGNAL.violet}1a`,
-            color: SIGNAL.violet,
-          }}
-        >
-          {TRIPLE.object}
-        </span>
+        <Pill color={SIGNAL.violet}>{TRIPLE.object}</Pill>
       </div>
 
       <Operator label="bind  ⊛" />
@@ -166,14 +170,14 @@ export function HeroDemo() {
             aria-hidden
             className="probe-sweep pointer-events-none absolute inset-y-0 w-[14%]"
             style={{
-              background: `linear-gradient(90deg, transparent, ${SIGNAL.amber}aa, transparent)`,
+              background: `linear-gradient(90deg, transparent, ${oklch(SIGNAL.amber, 0.67)}, transparent)`,
               mixBlendMode: "screen",
             }}
           />
         </div>
       </div>
       <p className="ml-[80px] mt-1.5 font-mono text-[10px] text-muted-foreground/70">
-        one 1024-dimensional vector
+        {TRACE_CELLS}-cell preview of one {TRACE_DIMS}-d vector
       </p>
 
       <Operator label="probe" />
@@ -181,21 +185,27 @@ export function HeroDemo() {
       <div
         className="rounded-md border px-4 py-3"
         style={{
-          borderColor: `${SIGNAL.amber}4d`,
-          background: `${SIGNAL.amber}0f`,
+          borderColor: oklch(SIGNAL.amber, 0.3),
+          background: oklch(SIGNAL.amber, 0.06),
         }}
       >
-        <p className="marginalia-label" style={{ color: `${SIGNAL.amber}cc` }}>
+        <p
+          className="marginalia-label"
+          style={{ color: oklch(SIGNAL.amber, 0.8) }}
+        >
           unbind
         </p>
         <p className="mt-1 text-[14px] text-foreground/90">
           &ldquo;Who handles login?&rdquo;
           <span className="text-muted-foreground"> → </span>
-          <span className="font-medium" style={{ color: SIGNAL.amber }}>
+          <span className="font-medium" style={{ color: oklch(SIGNAL.amber) }}>
             {TRIPLE.subject}
           </span>
           <span className="text-muted-foreground"> · </span>
-          <span className="font-medium" style={{ color: SIGNAL.violet }}>
+          <span
+            className="font-medium"
+            style={{ color: oklch(SIGNAL.violet) }}
+          >
             {TRIPLE.object}
           </span>
         </p>
@@ -206,10 +216,7 @@ export function HeroDemo() {
 
 function Operator({ label }: { label: string }) {
   return (
-    <div
-      aria-hidden
-      className="my-3 flex items-center gap-3 pl-[68px]"
-    >
+    <div aria-hidden className="my-3 flex items-center gap-3 pl-[68px]">
       <span className="h-3 w-px bg-border" />
       <span className="font-mono text-[10.5px] lowercase tracking-[0.04em] text-muted-foreground/80">
         {label}

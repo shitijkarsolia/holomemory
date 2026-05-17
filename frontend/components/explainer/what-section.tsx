@@ -12,7 +12,7 @@ export function WhatSection() {
       <div className="mt-6 space-y-4 text-[16px] leading-relaxed text-foreground/85">
         <p>
           Holographic Reduced Representations (HRR) are a way to encode
-          structured information — like &ldquo;Sarah owns the auth service&rdquo; —
+          structured information (like &ldquo;Sarah owns the auth service&rdquo;)
           into a single fixed-width vector using algebra, not a neural network.
         </p>
         <p>
@@ -47,7 +47,7 @@ export function WhatSection() {
         <p className="mt-2 text-[14.5px] leading-relaxed text-muted-foreground">
           This approach trades semantic richness (neural embeddings understand
           that &ldquo;login&rdquo; relates to &ldquo;auth&rdquo;) for
-          architectural simplicity — zero external dependencies, sub-millisecond
+          architectural simplicity: zero external dependencies, sub-millisecond
           retrieval, and a transparent scoring formula you can inspect and
           tune.
         </p>

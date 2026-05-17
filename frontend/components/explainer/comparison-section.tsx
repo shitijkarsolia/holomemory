@@ -25,7 +25,7 @@ export function ComparisonSection() {
       </h2>
       <p className="mt-4 max-w-2xl text-[16px] leading-relaxed text-muted-foreground">
         This isn&rsquo;t a replacement for RAG or vector databases. It&rsquo;s a
-        different point in the design space — optimized for lightweight, local,
+        different point in the design space, optimized for lightweight, local,
         structured agent memory.
       </p>
 

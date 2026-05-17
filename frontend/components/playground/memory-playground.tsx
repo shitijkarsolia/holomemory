@@ -20,25 +20,47 @@ export function MemoryPlayground() {
   }, []);
 
   return (
-    <section className="px-6 pb-16">
+    <section className="border-t border-border/30 px-6 pb-16 pt-12">
       <div className="mx-auto max-w-[1400px]">
-        <div className="grid gap-6 lg:grid-cols-[300px_1fr_320px]">
-          <div className="rounded-xl border border-border/30 bg-card/50 p-5">
-            <TeachPanel onEncoded={handleEncoded} />
+        <div className="grid gap-6 lg:grid-cols-[360px_1fr_360px] lg:gap-8">
+          <div className="flex flex-col">
+            <PanelLabel n="01" title="Teach" />
+            <div className="mt-3 flex-1 rounded-xl border border-border/40 bg-card/40 p-6">
+              <TeachPanel onEncoded={handleEncoded} />
+            </div>
           </div>
 
-          <div className="min-h-[400px]">
-            <MemoryField
-              highlightedIds={highlightedIds}
-              lastEncodedId={lastEncodedId}
-            />
+          <div className="flex flex-col">
+            <PanelLabel n="02" title="Memory field" />
+            <div className="mt-3 min-h-[440px] flex-1">
+              <MemoryField
+                highlightedIds={highlightedIds}
+                lastEncodedId={lastEncodedId}
+              />
+            </div>
           </div>
 
-          <div className="rounded-xl border border-border/30 bg-card/50 p-5">
-            <RecallChallenge onResults={handleResults} />
+          <div className="flex flex-col">
+            <PanelLabel n="03" title="Recall" />
+            <div className="mt-3 flex-1 rounded-xl border border-border/40 bg-card/40 p-6">
+              <RecallChallenge onResults={handleResults} />
+            </div>
           </div>
         </div>
       </div>
     </section>
+  );
+}
+
+function PanelLabel({ n, title }: { n: string; title: string }) {
+  return (
+    <div className="flex items-baseline gap-3">
+      <span className="font-mono text-[12px] tracking-[0.04em] text-[color:var(--signal-amber)]">
+        {n}
+      </span>
+      <span className="font-serif text-[20px] leading-none tracking-tight text-foreground">
+        {title}
+      </span>
+    </div>
   );
 }

@@ -28,11 +28,18 @@ export function MemoryField({ highlightedIds = [], lastEncodedId }: Props) {
 
   if (memories.length === 0) {
     return (
-      <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-border/50 bg-secondary/20">
-        <div className="text-center px-6">
-          <p className="text-sm text-muted-foreground">Memory field is empty</p>
-          <p className="text-[11px] text-muted-foreground/60 mt-1">
-            Seed the demo or teach the agent to see memories appear here
+      <div className="flex h-full min-h-[440px] items-center justify-center rounded-xl border border-dashed border-border/40 bg-[oklch(0.09_0.012_75)]">
+        <div className="max-w-[280px] px-6 text-center">
+          <p className="font-serif text-[18px] tracking-tight text-foreground">
+            Memory field is empty
+          </p>
+          <p className="mt-2 text-[13.5px] leading-relaxed text-muted-foreground">
+            Click <span className="text-foreground/85">Seed demo memories</span>{" "}
+            above, or teach a memory on the left. Nodes will appear here and
+            cluster by shared entities.
+          </p>
+          <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground/60">
+            force-directed graph
           </p>
         </div>
       </div>

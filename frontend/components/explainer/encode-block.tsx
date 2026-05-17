@@ -27,10 +27,13 @@ const EXAMPLE_FACTS = [
   },
 ];
 
+type Phase = "idle" | "decomposing" | "binding" | "encoded" | "error";
+
+const DECOMPOSE_MS = 2400;
+const BIND_MS = 2200;
+
 export function EncodeBlock() {
-  const [phase, setPhase] = useState<
-    "idle" | "decomposing" | "encoded" | "error"
-  >("idle");
+  const [phase, setPhase] = useState<Phase>("idle");
   const [triple, setTriple] = useState<{
     s: string;
     p: string;
@@ -39,6 +42,8 @@ export function EncodeBlock() {
   const [encoded, setEncoded] = useState<Memory | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const queryClient = useQueryClient();
+
+  const busy = phase === "decomposing" || phase === "binding";
 
   const handleEncode = async (
     text: string,
@@ -49,26 +54,32 @@ export function EncodeBlock() {
     setPhase("decomposing");
     setTriple({ s, p, o });
 
-    await new Promise((r) => setTimeout(r, 1100));
+    await new Promise((r) => setTimeout(r, DECOMPOSE_MS));
+
+    setPhase("binding");
+    const apiCall = api.memories.create({
+      text,
+      kind: "fact",
+      subject: s,
+      predicate: p,
+      object: o,
+      entities: [s, o],
+      tags: [],
+      source: "user",
+      trust: 0.9,
+    });
 
     try {
-      const memory = await api.memories.create({
-        text,
-        kind: "fact",
-        subject: s,
-        predicate: p,
-        object: o,
-        entities: [s, o],
-        tags: [],
-        source: "user",
-        trust: 0.9,
-      });
+      const [memory] = await Promise.all([
+        apiCall,
+        new Promise((r) => setTimeout(r, BIND_MS)),
+      ]);
       setEncoded(memory);
       setPhase("encoded");
       queryClient.invalidateQueries({ queryKey: ["field"] });
     } catch {
       setErrorMsg(
-        "Backend is not running — the demo above shows the same flow statically.",
+        "Backend is not running. The demo above shows the same flow statically.",
       );
       setPhase("error");
     }
@@ -95,7 +106,7 @@ export function EncodeBlock() {
             onClick={() =>
               handleEncode(fact.text, fact.subject, fact.predicate, fact.object)
             }
-            disabled={phase === "decomposing"}
+            disabled={busy}
             className="rounded-md border border-border bg-card/40 px-3.5 py-3 text-left text-[13px] leading-snug text-foreground/90 hover:border-[color:var(--signal-amber)]/40 hover:bg-card/70 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {fact.text}
@@ -104,61 +115,78 @@ export function EncodeBlock() {
       </div>
 
       <AnimatePresence mode="wait">
-        {phase === "decomposing" && triple && (
+        {(phase === "decomposing" || phase === "binding") && triple && (
           <motion.div
-            key="decompose"
+            key="working"
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.5 }}
             className="mt-8 rounded-md border border-border bg-card/40 p-5"
           >
-            <p className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
-              Decomposing into subject / predicate / object
+            <p className="text-[12px] font-mono uppercase tracking-wider text-muted-foreground">
+              Step 1 / 2 · Decomposing into subject / predicate / object
             </p>
-            <div className="mt-3 grid grid-cols-[80px_1fr] gap-y-2 gap-x-3 text-sm">
-              <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground self-center">
+            <div className="mt-4 grid grid-cols-[88px_1fr] gap-y-3 gap-x-3 text-[15px]">
+              <span className="font-mono text-[12px] uppercase tracking-wider text-muted-foreground self-center">
                 subject
               </span>
               <motion.span
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.15 }}
-                className="rounded-md border border-[color:var(--signal-amber)]/40 bg-[color:var(--signal-amber)]/10 px-2.5 py-1 text-[color:var(--signal-amber)] font-medium w-fit"
+                transition={{ delay: 0.35, duration: 0.45 }}
+                className="rounded-md border border-[color:var(--signal-amber)]/40 bg-[color:var(--signal-amber)]/10 px-3 py-1.5 text-[color:var(--signal-amber)] font-medium w-fit"
               >
                 {triple.s}
               </motion.span>
-              <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground self-center">
+              <span className="font-mono text-[12px] uppercase tracking-wider text-muted-foreground self-center">
                 predicate
               </span>
               <motion.span
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 }}
-                className="rounded-md border border-[color:var(--signal-blue)]/40 bg-[color:var(--signal-blue)]/10 px-2.5 py-1 text-[color:var(--signal-blue)] font-medium w-fit"
+                transition={{ delay: 0.85, duration: 0.45 }}
+                className="rounded-md border border-[color:var(--signal-blue)]/40 bg-[color:var(--signal-blue)]/10 px-3 py-1.5 text-[color:var(--signal-blue)] font-medium w-fit"
               >
                 {triple.p}
               </motion.span>
-              <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground self-center">
+              <span className="font-mono text-[12px] uppercase tracking-wider text-muted-foreground self-center">
                 object
               </span>
               <motion.span
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.45 }}
-                className="rounded-md border border-[color:var(--signal-violet)]/40 bg-[color:var(--signal-violet)]/10 px-2.5 py-1 text-[color:var(--signal-violet)] font-medium w-fit"
+                transition={{ delay: 1.35, duration: 0.45 }}
+                className="rounded-md border border-[color:var(--signal-violet)]/40 bg-[color:var(--signal-violet)]/10 px-3 py-1.5 text-[color:var(--signal-violet)] font-medium w-fit"
               >
                 {triple.o}
               </motion.span>
             </div>
-            <motion.div
-              className="mt-4 flex items-center gap-2 text-xs text-muted-foreground"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.8 }}
-            >
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-[color:var(--signal-amber)] animate-pulse" />
-              Binding via circular convolution…
-            </motion.div>
+
+            <AnimatePresence>
+              {phase === "binding" && (
+                <motion.div
+                  key="binding"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.45 }}
+                  className="mt-5 border-t border-border/40 pt-4"
+                >
+                  <p className="text-[12px] font-mono uppercase tracking-wider text-muted-foreground">
+                    Step 2 / 2 · Binding via circular convolution
+                  </p>
+                  <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
+                    Each role is convolved with its value, and the three bound
+                    vectors are summed into one 1024-dim trace.
+                  </p>
+                  <p className="mt-3 flex items-center gap-2 font-mono text-[12.5px] text-foreground/85">
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-[color:var(--signal-amber)] animate-pulse" />
+                    trace = bind(r_s, v_s) + bind(r_p, v_p) + bind(r_o, v_o)
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         )}
 
@@ -167,19 +195,20 @@ export function EncodeBlock() {
             key="encoded"
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55 }}
             className="mt-8"
           >
-            <p className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
+            <p className="text-[12px] font-mono uppercase tracking-wider text-muted-foreground">
               Stored as a 1024-dim trace
             </p>
-            <div className="mt-2 rounded-md border border-[color:var(--signal-amber)]/35 bg-[color:var(--signal-amber)]/[0.06] px-4 py-3">
-              <p className="text-[14.5px] text-foreground/90">{encoded.text}</p>
-              <p className="mt-1.5 text-[11px] font-mono text-muted-foreground">
+            <div className="mt-2 rounded-md border border-[color:var(--signal-amber)]/35 bg-[color:var(--signal-amber)]/[0.06] px-4 py-3.5">
+              <p className="text-[15px] text-foreground/90">{encoded.text}</p>
+              <p className="mt-2 text-[12px] font-mono text-muted-foreground">
                 id: {encoded.id.slice(0, 8)}… · trust: {encoded.trust} ·
                 status: {encoded.status}
               </p>
             </div>
-            <p className="mt-3 text-[13px] text-muted-foreground">
+            <p className="mt-4 text-[14px] leading-relaxed text-muted-foreground">
               Notice: the same fact always produces the same vector. The trace
               is now searchable through algebraic probes.
             </p>
@@ -189,7 +218,7 @@ export function EncodeBlock() {
                 setEncoded(null);
                 setTriple(null);
               }}
-              className="mt-3 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="mt-4 text-[13px] text-muted-foreground hover:text-foreground transition-colors"
             >
               Encode another →
             </button>

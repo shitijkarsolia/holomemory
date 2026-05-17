@@ -31,15 +31,14 @@ export function TrustBlock() {
       // may already exist; continue
     }
 
-    await new Promise((r) => setTimeout(r, 700));
+    await new Promise((r) => setTimeout(r, 1600));
     setPhase("querying");
 
     try {
-      const res = await api.query(
-        "What database does the auth service use?",
-        "hybrid",
-        5,
-      );
+      const [res] = await Promise.all([
+        api.query("What database does the auth service use?", "hybrid", 5),
+        new Promise((r) => setTimeout(r, 1400)),
+      ]);
       setResult(res);
       setPhase("done");
     } catch {
@@ -124,16 +123,16 @@ export function TrustBlock() {
             className="mt-6 space-y-2"
           >
             <p className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
-              Results — trust determines ranking
+              Results, ranked by trust
             </p>
             {result.results.slice(0, 4).map((r, i) => {
               const isLowTrust = r.memory.trust < 0.4;
               return (
                 <motion.div
                   key={r.memory.id}
-                  initial={{ opacity: 0, x: -6 }}
+                  initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.1 }}
+                  transition={{ delay: i * 0.25, duration: 0.55 }}
                   className={`rounded-md border px-4 py-3 ${
                     isLowTrust
                       ? "border-[color:var(--signal-red)]/30 bg-[color:var(--signal-red)]/[0.06]"
@@ -147,7 +146,7 @@ export function TrustBlock() {
                       </p>
                       {isLowTrust && (
                         <p className="mt-1 text-[11px] text-[color:var(--signal-red)]/80">
-                          Low-trust source — suppressed in ranking
+                          Low-trust source, suppressed in ranking
                         </p>
                       )}
                     </div>

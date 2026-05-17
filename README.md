@@ -2,11 +2,11 @@
 
 A local-first agent memory lab that implements HRR-style vector-symbolic memory with FastAPI, SQLite, NumPy, and an interactive Next.js playground.
 
-![HoloMemory homepage hero — a sentence decomposes into a subject/predicate/object triple, each role binds into a deterministic amplitude strip, the three superpose into a single 1024-dimensional trace, and an algebraic probe recovers the answer.](frontend/public/screenshots/home-hero-desktop.png)
+![HoloMemory homepage hero: a sentence decomposes into a subject/predicate/object triple, each role binds into a deterministic amplitude strip, the three superpose into a single 1024-dimensional trace, and an algebraic probe recovers the answer.](frontend/public/screenshots/home-hero-desktop.png)
 
 ## Why this exists
 
-AI agents need memory systems that go beyond simple key-value stores or embedding-based RAG. HoloMemory demonstrates how structured memories can be encoded into high-dimensional vector traces using algebraic operations, then retrieved approximately — without requiring external ML models or paid APIs.
+AI agents need memory systems that go beyond simple key-value stores or embedding-based RAG. HoloMemory demonstrates how structured memories can be encoded into high-dimensional vector traces using algebraic operations, then retrieved approximately, without requiring external ML models or paid APIs.
 
 This is a portfolio project that makes AI infrastructure thinking visible: vector-symbolic architectures, retrieval system design, full-stack engineering, and technical communication.
 
@@ -158,7 +158,7 @@ node scripts/screenshot.mjs         # in another, from the repo root
 |---------|---------|
 | Playground (/) | Interactive lab: teach facts, visualize memory field, query with fuzzy recall |
 | Recall Duel | Side-by-side keyword vs holographic comparison |
-| Distortion Lab | Inject noise, create contradictions, reset — stress-test the system |
+| Distortion Lab | Inject noise, create contradictions, reset: stress-test the system |
 | How It Works | Step-through explainer of bind/superpose/unbind |
 | Experiments | Run benchmarks comparing retrieval strategies |
 | Memories | Browse, filter, inspect memories |
@@ -230,7 +230,7 @@ Typical results with seed data:
 - Not production-scale: linear scan over all vectors (no ANN index)
 - Simple tokenizer: no lemmatization or semantic understanding
 - No LLM-based entity extraction: relies on manual or rule-based fields
-- Holographic retrieval is approximate by design — not exact lookup
+- Holographic retrieval is approximate by design, not exact lookup
 - Single-user, single-process SQLite
 
 ## Future work

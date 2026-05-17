@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/lib/api";
 import { useQueryClient } from "@tanstack/react-query";
-import type { QueryResponse } from "@/lib/types";
+import type { QueryResponse, RetrievalResult } from "@/lib/types";
 import { DEMO_FACTS } from "@/lib/demo-data";
 
 const EXAMPLE_QUERIES = [
@@ -13,8 +13,69 @@ const EXAMPLE_QUERIES = [
   "What framework does the API gateway use?",
 ];
 
+type SignalColor = { l: number; c: number; h: number };
+
+const SIGNAL: Record<"amber" | "blue" | "violet", SignalColor> = {
+  amber: { l: 0.78, c: 0.13, h: 72 },
+  blue: { l: 0.7, c: 0.1, h: 215 },
+  violet: { l: 0.72, c: 0.11, h: 305 },
+};
+
+function oklch(c: SignalColor, alpha = 1): string {
+  return alpha >= 1
+    ? `oklch(${c.l} ${c.c} ${c.h})`
+    : `oklch(${c.l} ${c.c} ${c.h} / ${alpha})`;
+}
+
+function hash(seed: string, i: number): number {
+  let h = 2166136261 ^ (i * 16777619);
+  for (let j = 0; j < seed.length; j++) {
+    h = Math.imul(h ^ seed.charCodeAt(j), 16777619);
+  }
+  return ((h >>> 0) % 1000) / 1000;
+}
+
+function vectorPreview(seed: string, n: number, color: SignalColor) {
+  return Array.from({ length: n }, (_, i) => {
+    const a = hash(seed, i);
+    const b = hash(seed, i + 2003);
+    return {
+      color,
+      amplitude: 0.18 + Math.abs(a - 0.5) * 1.55 + b * 0.22,
+    };
+  });
+}
+
+function MiniTrace({
+  cells,
+  className = "",
+}: {
+  cells: { color: SignalColor; amplitude: number }[];
+  className?: string;
+}) {
+  return (
+    <div
+      className={`relative h-5 overflow-hidden rounded-[2px] border border-border/60 ${className}`}
+    >
+      <div className="absolute inset-0 flex items-stretch gap-[1px]">
+        {cells.map((c, i) => (
+          <span
+            key={i}
+            className="flex-1"
+            style={{
+              background: oklch(c.color),
+              opacity: Math.min(0.95, c.amplitude),
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function RecallBlock() {
   const [query, setQuery] = useState("");
+  const [submittedQuery, setSubmittedQuery] = useState<string | null>(null);
   const [result, setResult] = useState<QueryResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [seeded, setSeeded] = useState(false);
@@ -54,19 +115,30 @@ export function RecallBlock() {
 
   const handleQuery = async (q: string) => {
     setQuery(q);
+    setSubmittedQuery(q);
     setLoading(true);
     setResult(null);
     setQueryError(null);
     try {
-      const res = await api.query(q, "hybrid", 5);
+      const [res] = await Promise.all([
+        api.query(q, "hybrid", 5),
+        new Promise((r) => setTimeout(r, 900)),
+      ]);
       setResult(res);
     } catch {
       setQueryError(
-        "Query failed — the backend is not reachable. Try again once it is running.",
+        "Query failed. The backend is not reachable. Try again once it is running.",
       );
     }
     setLoading(false);
   };
+
+  const probeCells = useMemo(
+    () => (submittedQuery ? vectorPreview(submittedQuery, 64, SIGNAL.blue) : null),
+    [submittedQuery],
+  );
+
+  const topResult: RetrievalResult | null = result?.results[0] ?? null;
 
   return (
     <section className="mx-auto max-w-3xl px-6 py-20 sm:py-24 border-t border-border/30">
@@ -75,13 +147,14 @@ export function RecallBlock() {
         Recall through indirect queries
       </h2>
       <p className="mt-4 text-[16px] leading-relaxed text-muted-foreground">
-        The system is pre-loaded with facts about a fictional engineering team.
-        Try asking something indirect — the probe doesn&rsquo;t need to share
-        exact words with the stored facts.
+        The system is pre-loaded with facts about a fictional engineering
+        team. Ask anything related, even with different words. The probe
+        builds a vector from your question and scores it against every stored
+        trace.
       </p>
 
       {!seeded && !seedError && (
-        <p className="mt-5 text-xs text-muted-foreground animate-pulse">
+        <p className="mt-5 text-[13px] text-muted-foreground animate-pulse">
           Loading seed memories…
         </p>
       )}
@@ -89,21 +162,21 @@ export function RecallBlock() {
       {seedError && (
         <div className="mt-5 rounded-md border border-[color:var(--signal-red)]/30 bg-[color:var(--signal-red)]/5 px-4 py-3 text-[13px] text-foreground/85">
           Couldn&rsquo;t reach the backend to seed memories. The rest of the
-          page still works — start the backend (see README) to use this block.
+          page still works. Start the backend (see README) to use this block.
         </div>
       )}
 
       {seeded && (
         <>
           <div className="mt-6 rounded-md border border-border bg-card/40 p-4">
-            <p className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
+            <p className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
               Seed memories
             </p>
             <ul className="mt-2 space-y-1.5">
               {DEMO_FACTS.slice(0, 4).map((f) => (
                 <li
                   key={f.text}
-                  className="text-[13px] leading-snug text-foreground/80"
+                  className="text-[13.5px] leading-snug text-foreground/80"
                 >
                   {f.text}
                 </li>
@@ -133,14 +206,14 @@ export function RecallBlock() {
                 e.key === "Enter" && query && handleQuery(query)
               }
               placeholder="Or type your own probe…"
-              className="flex-1 rounded-md border border-border bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-[color:var(--signal-amber)]/50"
+              className="flex-1 rounded-md border border-border bg-transparent px-3 py-2 text-[14px] text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-[color:var(--signal-amber)]/50"
             />
             <button
               onClick={() => query && handleQuery(query)}
               disabled={loading || !query}
-              className="rounded-md bg-primary px-4 py-2 text-xs font-medium text-primary-foreground disabled:opacity-40 hover:scale-[1.02] transition-transform"
+              className="rounded-md bg-primary px-4 py-2 text-[13px] font-medium text-primary-foreground disabled:opacity-40 hover:scale-[1.02] transition-transform"
             >
-              {loading ? "…" : "Probe"}
+              {loading ? "Probing…" : "Probe"}
             </button>
           </div>
         </>
@@ -152,68 +225,208 @@ export function RecallBlock() {
         </div>
       )}
 
+      {loading && submittedQuery && probeCells && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-6 rounded-md border border-border bg-card/40 p-5"
+        >
+          <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+            Probe vector built from your question
+          </p>
+          <p className="mt-2 text-[14px] leading-relaxed text-foreground/85">
+            &ldquo;{submittedQuery}&rdquo;
+          </p>
+          <div className="mt-4">
+            <MiniTrace cells={probeCells} />
+          </div>
+          <p className="mt-2 flex items-center gap-2 font-mono text-[11.5px] text-muted-foreground">
+            <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[color:var(--signal-amber)]" />
+            Scoring against every stored trace…
+          </p>
+        </motion.div>
+      )}
+
       <AnimatePresence>
-        {result && (
+        {result && submittedQuery && probeCells && !loading && (
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-6 space-y-2"
+            transition={{ duration: 0.5 }}
+            className="mt-6 space-y-5"
           >
-            <p className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
-              Results · {result.latency_ms.toFixed(0)} ms
-            </p>
-            {result.results.slice(0, 4).map((r, i) => (
-              <motion.div
-                key={r.memory.id}
-                initial={{ opacity: 0, x: -6 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.08 }}
-                className="rounded-md border border-border bg-card/40 px-4 py-3"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-[14px] text-foreground/90">
-                      {r.memory.text}
-                    </p>
-                    <p className="mt-1 text-[11px] text-muted-foreground">
-                      {r.why[0]}
-                    </p>
-                  </div>
-                  <div className="shrink-0 rounded-md border border-[color:var(--signal-amber)]/30 bg-[color:var(--signal-amber)]/10 px-2 py-0.5">
-                    <span className="text-[11px] font-mono text-[color:var(--signal-amber)]">
-                      {(r.score * 100).toFixed(0)}%
-                    </span>
-                  </div>
-                </div>
-                <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10.5px] font-mono text-muted-foreground">
-                  <span>
-                    <span className="text-[color:var(--signal-amber)]/80">
-                      holo
-                    </span>{" "}
-                    {r.components.holographic.toFixed(3)}
-                  </span>
-                  <span>
-                    <span className="text-[color:var(--signal-blue)]/80">
-                      kw
-                    </span>{" "}
-                    {r.components.keyword.toFixed(3)}
-                  </span>
-                  <span>
-                    <span className="text-[color:var(--signal-violet)]/80">
-                      trust
-                    </span>{" "}
-                    {r.components.trust.toFixed(2)}
-                  </span>
-                  <span>
-                    <span className="text-muted-foreground">entity</span>{" "}
-                    {r.components.entity_overlap.toFixed(3)}
-                  </span>
-                </div>
-              </motion.div>
-            ))}
+            <div className="rounded-md border border-border bg-card/40 p-5">
+              <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+                Probe vector
+              </p>
+              <p className="mt-2 text-[14px] leading-relaxed text-foreground/85">
+                &ldquo;{submittedQuery}&rdquo;
+              </p>
+              <div className="mt-3">
+                <MiniTrace cells={probeCells} />
+              </div>
+              <p className="mt-2 font-mono text-[11px] text-muted-foreground/70">
+                The system built this vector from your question and compared
+                it against every stored trace in {result.latency_ms.toFixed(0)} ms.
+              </p>
+            </div>
+
+            <div>
+              <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+                Top matches, ranked
+              </p>
+              <div className="mt-3 space-y-3">
+                {result.results.slice(0, 4).map((r, i) => (
+                  <ResultRow key={r.memory.id} r={r} index={i} />
+                ))}
+              </div>
+            </div>
+
+            {topResult && (
+              <div className="rounded-md border border-border/50 bg-card/30 p-5">
+                <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+                  What you just saw
+                </p>
+                <p className="mt-2 text-[14.5px] leading-relaxed text-foreground/80">
+                  The probe matched{" "}
+                  <span className="text-foreground/95">
+                    &ldquo;{topResult.memory.text}&rdquo;
+                  </span>{" "}
+                  with a {(topResult.score * 100).toFixed(0)}% combined score.
+                  The biggest contribution came from{" "}
+                  <BiggestComponent r={topResult} />, which is why the system
+                  could find this memory even though your question used
+                  different words.
+                </p>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
     </section>
+  );
+}
+
+function ResultRow({ r, index }: { r: RetrievalResult; index: number }) {
+  const traceCells = useMemo(
+    () =>
+      vectorPreview(
+        `trace::${r.memory.subject ?? ""}::${r.memory.predicate ?? ""}::${
+          r.memory.object ?? r.memory.text
+        }`,
+        64,
+        SIGNAL.amber,
+      ),
+    [r.memory],
+  );
+
+  const components = [
+    {
+      label: "holographic",
+      short: "vector match",
+      value: r.components.holographic,
+      color: SIGNAL.amber,
+    },
+    {
+      label: "keyword",
+      short: "shared words",
+      value: r.components.keyword,
+      color: SIGNAL.blue,
+    },
+    {
+      label: "trust",
+      short: "source trust",
+      value: r.components.trust,
+      color: SIGNAL.violet,
+    },
+    {
+      label: "entity",
+      short: "shared entities",
+      value: r.components.entity_overlap,
+      color: { l: 0.62, c: 0.07, h: 155 },
+    },
+  ];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -10 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.28, duration: 0.55 }}
+      className="rounded-md border border-border bg-card/40 p-4"
+    >
+      <div className="flex items-start justify-between gap-4">
+        <p className="text-[14.5px] leading-relaxed text-foreground/90">
+          {r.memory.text}
+        </p>
+        <div className="shrink-0 rounded-md border border-[color:var(--signal-amber)]/30 bg-[color:var(--signal-amber)]/10 px-2.5 py-1">
+          <span className="font-mono text-[12.5px] text-[color:var(--signal-amber)]">
+            {(r.score * 100).toFixed(0)}%
+          </span>
+        </div>
+      </div>
+
+      <div className="mt-3">
+        <MiniTrace cells={traceCells} />
+      </div>
+
+      <div className="mt-3 space-y-1.5">
+        {components.map((c) => (
+          <div key={c.label} className="flex items-center gap-3">
+            <span className="w-[110px] shrink-0 font-mono text-[11px] text-muted-foreground">
+              {c.short}
+            </span>
+            <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-border/40">
+              <div
+                className="h-full rounded-full"
+                style={{
+                  width: `${Math.min(100, Math.max(0, c.value * 100))}%`,
+                  background: oklch(c.color, 0.85),
+                }}
+              />
+            </div>
+            <span className="w-[44px] shrink-0 text-right font-mono text-[11px] text-foreground/70">
+              {(c.value * 100).toFixed(0)}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {r.why.length > 0 && (
+        <p className="mt-3 text-[12.5px] leading-relaxed text-muted-foreground/85">
+          {r.why[0]}
+        </p>
+      )}
+    </motion.div>
+  );
+}
+
+function BiggestComponent({ r }: { r: RetrievalResult }) {
+  const entries = [
+    {
+      label: "holographic similarity (vector overlap)",
+      value: r.components.holographic,
+      color: "var(--signal-amber)",
+    },
+    {
+      label: "shared keywords",
+      value: r.components.keyword,
+      color: "var(--signal-blue)",
+    },
+    {
+      label: "trust in the source",
+      value: r.components.trust,
+      color: "var(--signal-violet)",
+    },
+    {
+      label: "shared entities",
+      value: r.components.entity_overlap,
+      color: "oklch(0.62 0.07 155)",
+    },
+  ];
+  const top = entries.reduce((a, b) => (b.value > a.value ? b : a));
+  return (
+    <span style={{ color: top.color }} className="font-medium">
+      {top.label}
+    </span>
   );
 }

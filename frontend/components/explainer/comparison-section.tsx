@@ -20,8 +20,7 @@ const ROWS: Array<{ label: string; kw: string; rag: string; holo: string }> = [
 export function ComparisonSection() {
   return (
     <section className="mx-auto max-w-4xl px-6 py-20 sm:py-24 border-t border-border/30">
-      <p className="eyebrow">Honest comparison</p>
-      <h2 className="mt-3 font-serif text-3xl sm:text-4xl leading-[1.1] tracking-tight text-foreground">
+      <h2 className="font-serif text-3xl sm:text-4xl leading-[1.1] tracking-tight text-foreground">
         Where it fits
       </h2>
       <p className="mt-4 max-w-2xl text-[16px] leading-relaxed text-muted-foreground">

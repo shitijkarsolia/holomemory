@@ -62,7 +62,7 @@ export function RecallBlock() {
       setResult(res);
     } catch {
       setQueryError(
-        "Query failed — the backend is not reachable. Try again once it is running.",
+        "Query failed. The backend is not reachable. Try again once it is running.",
       );
     }
     setLoading(false);
@@ -76,7 +76,7 @@ export function RecallBlock() {
       </h2>
       <p className="mt-4 text-[16px] leading-relaxed text-muted-foreground">
         The system is pre-loaded with facts about a fictional engineering team.
-        Try asking something indirect — the probe doesn&rsquo;t need to share
+        Try asking something indirect: the probe doesn&rsquo;t need to share
         exact words with the stored facts.
       </p>
 
@@ -89,7 +89,7 @@ export function RecallBlock() {
       {seedError && (
         <div className="mt-5 rounded-md border border-[color:var(--signal-red)]/30 bg-[color:var(--signal-red)]/5 px-4 py-3 text-[13px] text-foreground/85">
           Couldn&rsquo;t reach the backend to seed memories. The rest of the
-          page still works — start the backend (see README) to use this block.
+          page still works. Start the backend (see README) to use this block.
         </div>
       )}
 
@@ -165,9 +165,9 @@ export function RecallBlock() {
             {result.results.slice(0, 4).map((r, i) => (
               <motion.div
                 key={r.memory.id}
-                initial={{ opacity: 0, x: -6 }}
+                initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.08 }}
+                transition={{ delay: i * 0.22, duration: 0.55 }}
                 className="rounded-md border border-border bg-card/40 px-4 py-3"
               >
                 <div className="flex items-start justify-between gap-4">

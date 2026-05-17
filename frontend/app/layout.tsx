@@ -21,7 +21,7 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "HoloMem — Structured vector memory for AI agents",
+  title: "HoloMem: structured vector memory for AI agents",
   description:
     "A portfolio project exploring algebraic agent memory using Holographic Reduced Representations.",
 };
@@ -39,7 +39,7 @@ export default function RootLayout({
       <body className="min-h-full bg-background text-foreground font-sans">
         <Providers>
           <TopNav />
-          <main className="pt-12">{children}</main>
+          <main className="pt-16">{children}</main>
         </Providers>
       </body>
     </html>

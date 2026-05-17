@@ -14,7 +14,7 @@ export default function AboutPage() {
           Holographic memory is a brain-inspired approach to storing and retrieving information.
           Instead of indexing memories by keys or keywords, each memory is encoded as a
           high-dimensional vector trace using algebraic operations. Retrieval works by constructing
-          a probe vector and finding which stored traces are most similar — an approximate,
+          a probe vector and finding which stored traces are most similar: an approximate,
           content-addressable lookup rather than an exact database query.
         </p>
       </section>
@@ -65,7 +65,7 @@ export default function AboutPage() {
         <ul className="mt-2 space-y-1.5 text-sm text-muted-foreground">
           <li><span className="font-medium text-foreground">Keyword:</span> Token overlap scoring (baseline)</li>
           <li><span className="font-medium text-foreground">Holographic:</span> Cosine similarity between probe and trace vectors</li>
-          <li><span className="font-medium text-foreground">Hybrid:</span> Weighted combination — holographic 40%, keyword 30%, trust 15%, entity overlap 15%</li>
+          <li><span className="font-medium text-foreground">Hybrid:</span> Weighted combination of holographic 40%, keyword 30%, trust 15%, entity overlap 15%</li>
         </ul>
       </section>
 

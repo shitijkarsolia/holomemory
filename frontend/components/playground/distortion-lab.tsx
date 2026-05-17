@@ -46,7 +46,7 @@ export function DistortionLab() {
     onSuccess: () => {
       invalidateAll();
       setSelectedMemory(null);
-      showFeedback("Contradiction created — watch trust scores shift");
+      showFeedback("Contradiction created. Watch trust scores shift.");
     },
   });
 
@@ -59,23 +59,29 @@ export function DistortionLab() {
   });
 
   return (
-    <section className="px-6 py-12">
+    <section className="border-t border-border/30 px-6 py-16">
       <div className="mx-auto max-w-[1400px]">
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold tracking-tight">Distortion Lab</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Stress-test the memory system. Add noise, create contradictions, see how trust adapts.
+        <div className="mb-8 max-w-2xl">
+          <h2 className="font-serif text-[28px] leading-tight tracking-tight text-foreground sm:text-[32px]">
+            Distortion lab
+          </h2>
+          <p className="mt-3 text-[15.5px] leading-relaxed text-muted-foreground">
+            Stress-test the system. Add noise, create contradictions, see how
+            trust adapts. Each action updates the memory field above.
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div className="rounded-xl border border-border/30 bg-card/50 p-5">
-            <div className="flex items-center gap-2 mb-2">
-              <Waveform className="h-4 w-4 text-primary" weight="bold" />
-              <h3 className="text-sm font-medium">Inject Noise</h3>
+        <div className="grid gap-5 sm:grid-cols-3">
+          <div className="rounded-xl border border-border/40 bg-card/40 p-6">
+            <div className="mb-3 flex items-center gap-2">
+              <Waveform className="h-5 w-5 text-[color:var(--signal-amber)]" weight="bold" />
+              <h3 className="font-serif text-[18px] tracking-tight text-foreground">
+                Inject noise
+              </h3>
             </div>
-            <p className="text-[11px] text-muted-foreground mb-4">
-              Add 3 random low-trust nonsense memories. Watch them appear as dim nodes in the field.
+            <p className="mb-5 text-[13.5px] leading-relaxed text-muted-foreground">
+              Add 3 random low-trust nonsense memories. Watch them appear as
+              dim nodes in the field above.
             </p>
             <Button
               onClick={() => noiseMutation.mutate()}
@@ -88,13 +94,16 @@ export function DistortionLab() {
             </Button>
           </div>
 
-          <div className="rounded-xl border border-border/30 bg-card/50 p-5">
-            <div className="flex items-center gap-2 mb-2">
-              <Warning className="h-4 w-4 text-destructive" weight="bold" />
-              <h3 className="text-sm font-medium">Contradict</h3>
+          <div className="rounded-xl border border-border/40 bg-card/40 p-6">
+            <div className="mb-3 flex items-center gap-2">
+              <Warning className="h-5 w-5 text-[color:var(--signal-red)]" weight="bold" />
+              <h3 className="font-serif text-[18px] tracking-tight text-foreground">
+                Contradict
+              </h3>
             </div>
-            <p className="text-[11px] text-muted-foreground mb-3">
-              Pick a memory to contradict. The system creates a conflicting version and flags both.
+            <p className="mb-4 text-[13.5px] leading-relaxed text-muted-foreground">
+              Pick a memory to contradict. The system creates a conflicting
+              version and flags both.
             </p>
             {memories.length > 0 ? (
               <div className="space-y-2">
@@ -136,12 +145,14 @@ export function DistortionLab() {
             )}
           </div>
 
-          <div className="rounded-xl border border-border/30 bg-card/50 p-5">
-            <div className="flex items-center gap-2 mb-2">
-              <Trash className="h-4 w-4 text-muted-foreground" weight="bold" />
-              <h3 className="text-sm font-medium">Reset</h3>
+          <div className="rounded-xl border border-border/40 bg-card/40 p-6">
+            <div className="mb-3 flex items-center gap-2">
+              <Trash className="h-5 w-5 text-muted-foreground" weight="bold" />
+              <h3 className="font-serif text-[18px] tracking-tight text-foreground">
+                Reset
+              </h3>
             </div>
-            <p className="text-[11px] text-muted-foreground mb-4">
+            <p className="mb-5 text-[13.5px] leading-relaxed text-muted-foreground">
               Wipe all memories, vectors, and symbols. Start fresh.
             </p>
             <Button

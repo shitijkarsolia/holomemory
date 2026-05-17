@@ -55,6 +55,7 @@ async function main() {
       viewport: { width: s.width, height: s.height },
       deviceScaleFactor: 2,
       colorScheme: "dark",
+      reducedMotion: "reduce",
     });
     const page = await ctx.newPage();
     const url = `${BASE}${s.url}`;

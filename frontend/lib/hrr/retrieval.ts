@@ -1,0 +1,111 @@
+import type { QueryResponse, RetrievalResult } from "../types";
+import { buildQueryProbe, tokenize } from "./encoder";
+import { cosineSimilarity } from "./hrr";
+import { keywordSearch } from "./keyword";
+import { MemoryStore } from "./store";
+
+export function queryMemories(
+  store: MemoryStore,
+  query: string,
+  mode: "hybrid" | "holographic" | "keyword" = "hybrid",
+  topK: number = 5
+): QueryResponse {
+  const start = performance.now();
+  const active = store.getActiveMemoriesWithVectors();
+  const queryTokens = tokenize(query);
+
+  if (active.length === 0 || queryTokens.length === 0) {
+    return {
+      query,
+      mode,
+      latency_ms: performance.now() - start,
+      results: [],
+      debug: {},
+    };
+  }
+
+  const probe = buildQueryProbe(query);
+
+  const scored: {
+    holographic: number;
+    keyword: number;
+    trust: number;
+    entityOverlap: number;
+    final: number;
+    memIdx: number;
+  }[] = [];
+
+  const keywordResults = keywordSearch(
+    query,
+    active.map((a) => a.memory),
+    active.length
+  );
+  const keywordMap = new Map(keywordResults.map((r) => [r.memoryId, r]));
+
+  for (let i = 0; i < active.length; i++) {
+    const { memory, vector } = active[i];
+
+    const holographic = Math.max(0, cosineSimilarity(probe, vector));
+    const kw = keywordMap.get(memory.id);
+    const keyword = kw ? kw.score : 0;
+    const trust = memory.trust;
+
+    const entitySet = new Set([
+      ...(memory.entities || []).map((e) => e.toLowerCase()),
+      ...(memory.subject ? [memory.subject.toLowerCase()] : []),
+      ...(memory.object ? memory.object.toLowerCase().split(/\s+/) : []),
+    ]);
+    const entityMatches = queryTokens.filter((t) => entitySet.has(t)).length;
+    const entityOverlap = queryTokens.length > 0 ? entityMatches / queryTokens.length : 0;
+
+    let final: number;
+    if (mode === "holographic") {
+      final = holographic;
+    } else if (mode === "keyword") {
+      final = keyword;
+    } else {
+      final = 0.4 * holographic + 0.3 * keyword + 0.15 * trust + 0.15 * entityOverlap;
+    }
+
+    if (final > 0.01) {
+      scored.push({ holographic, keyword, trust, entityOverlap, final, memIdx: i });
+    }
+  }
+
+  scored.sort((a, b) => b.final - a.final);
+  const topResults = scored.slice(0, topK);
+
+  const results: RetrievalResult[] = topResults.map((s) => {
+    const { memory } = active[s.memIdx];
+    const why: string[] = [];
+
+    if (s.holographic > 0.1) why.push(`Vector similarity: ${(s.holographic * 100).toFixed(0)}%`);
+    if (s.keyword > 0) {
+      const kw = keywordMap.get(memory.id);
+      if (kw) why.push(`Keyword match: ${kw.matchedTerms.join(", ")}`);
+    }
+    if (s.entityOverlap > 0) why.push(`Entity overlap detected`);
+    if (memory.trust >= 0.8) why.push(`High trust source (${memory.trust.toFixed(2)})`);
+    if (memory.trust < 0.4) why.push(`Low trust — downranked (${memory.trust.toFixed(2)})`);
+
+    return {
+      memory,
+      score: s.final,
+      components: {
+        holographic: s.holographic,
+        keyword: s.keyword,
+        trust: s.trust,
+        entity_overlap: s.entityOverlap,
+      },
+      why,
+    };
+  });
+
+  return {
+    query,
+    mode,
+    latency_ms: performance.now() - start,
+    results,
+    debug: { engine: "client-side", memories_searched: active.length },
+  };
+}

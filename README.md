@@ -2,6 +2,8 @@
 
 A local-first agent memory lab that implements HRR-style vector-symbolic memory with FastAPI, SQLite, NumPy, and an interactive Next.js playground.
 
+![HoloMemory homepage hero — a sentence decomposes into a subject/predicate/object triple, each role binds into a deterministic amplitude strip, the three superpose into a single 1024-dimensional trace, and an algebraic probe recovers the answer.](frontend/public/screenshots/home-hero-desktop.png)
+
 ## Why this exists
 
 AI agents need memory systems that go beyond simple key-value stores or embedding-based RAG. HoloMemory demonstrates how structured memories can be encoded into high-dimensional vector traces using algebraic operations, then retrieved approximately — without requiring external ML models or paid APIs.
@@ -106,6 +108,48 @@ Open http://localhost:3000
 ```bash
 chmod +x scripts/dev.sh
 ./scripts/dev.sh
+```
+
+## Screenshots
+
+The homepage opens with the algebra visible: a fact decomposes into roles, each role binds into a deterministic amplitude strip, the three superpose into one 1024-dimensional trace, and a probe recovers the answer.
+
+![Desktop hero](frontend/public/screenshots/home-hero-desktop.png)
+
+The full page walks the reader from "what is this" through encode, recall, trust-aware ranking, and an honest comparison with RAG, vector DBs, and keyword search.
+
+<details>
+<summary>Full page · desktop (long)</summary>
+
+![Desktop full page](frontend/public/screenshots/home-desktop.png)
+
+</details>
+
+On narrow viewports the hero text leads, the diagram follows, and every section stacks without clipping.
+
+<table>
+<tr>
+<td width="50%"><img alt="Mobile hero" src="frontend/public/screenshots/home-hero-mobile.png"></td>
+<td width="50%"><img alt="Playground" src="frontend/public/screenshots/playground-desktop.png"></td>
+</tr>
+<tr>
+<td align="center"><sub>Mobile hero · 390×844</sub></td>
+<td align="center"><sub>Playground · backend running shows live memory field</sub></td>
+</tr>
+</table>
+
+<details>
+<summary>Mobile · full page</summary>
+
+![Mobile full page](frontend/public/screenshots/home-mobile.png)
+
+</details>
+
+Regenerate any time with the dev server running:
+
+```bash
+cd frontend && npm run dev          # in one terminal
+node scripts/screenshot.mjs         # in another, from the repo root
 ```
 
 ## Frontend walkthrough

@@ -1,127 +1,227 @@
 "use client";
 
-export function HeroDemo() {
+const FACT = "Sarah owns the auth service and maintains the login flow.";
+const TRIPLE = {
+  subject: "Sarah",
+  predicate: "owns",
+  object: "auth service",
+};
+
+const STRIP_CELLS = 36;
+const TRACE_CELLS = 64;
+const TRACE_DIMS = 1024;
+
+type SignalColor = { l: number; c: number; h: number };
+
+const SIGNAL: Record<"amber" | "blue" | "violet", SignalColor> = {
+  amber: { l: 0.78, c: 0.13, h: 72 },
+  blue: { l: 0.7, c: 0.1, h: 215 },
+  violet: { l: 0.72, c: 0.11, h: 305 },
+};
+
+function oklch(color: SignalColor, alpha = 1): string {
+  return alpha >= 1
+    ? `oklch(${color.l} ${color.c} ${color.h})`
+    : `oklch(${color.l} ${color.c} ${color.h} / ${alpha})`;
+}
+
+function hash(seed: string, i: number): number {
+  let h = 2166136261 ^ (i * 16777619);
+  for (let j = 0; j < seed.length; j++) {
+    h = Math.imul(h ^ seed.charCodeAt(j), 16777619);
+  }
+  return ((h >>> 0) % 1000) / 1000;
+}
+
+function bindingAmplitudes(role: string, value: string, n: number): number[] {
+  const seed = `${role}::${value}`;
+  return Array.from({ length: n }, (_, i) => {
+    const a = hash(seed, i);
+    const b = hash(seed, i + 1009);
+    return 0.18 + Math.abs(a - 0.5) * 1.6 + b * 0.25;
+  });
+}
+
+function Strip({
+  amplitudes,
+  color,
+  label,
+  className = "",
+}: {
+  amplitudes: number[];
+  color: SignalColor;
+  label: string;
+  className?: string;
+}) {
+  const base = oklch(color);
   return (
-    <div className="demo-panel relative w-full p-6 sm:p-7">
-      <div className="flex items-center justify-between">
-        <p className="eyebrow">Structured fact → vector trace</p>
-        <span className="text-[10px] font-mono text-muted-foreground/70">
-          dim 1024
-        </span>
-      </div>
-
-      {/* Fact card */}
-      <div className="mt-4 rounded-md border border-border bg-card/60 px-4 py-3">
-        <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/70">
-          Fact
-        </p>
-        <p className="mt-1 text-[15px] leading-snug text-foreground">
-          Sarah owns the auth service and maintains the login flow.
-        </p>
-      </div>
-
-      {/* Triple rows */}
-      <div className="mt-4 grid grid-cols-[80px_1fr] gap-y-2 gap-x-3 text-sm">
-        <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground/70 self-center">
-          subject
-        </span>
-        <span className="rounded-md border border-[color:var(--signal-amber)]/40 bg-[color:var(--signal-amber)]/10 px-2.5 py-1 text-[color:var(--signal-amber)] font-medium w-fit">
-          Sarah
-        </span>
-
-        <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground/70 self-center">
-          predicate
-        </span>
-        <span className="rounded-md border border-[color:var(--signal-blue)]/40 bg-[color:var(--signal-blue)]/10 px-2.5 py-1 text-[color:var(--signal-blue)] font-medium w-fit">
-          owns
-        </span>
-
-        <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground/70 self-center">
-          object
-        </span>
-        <span className="rounded-md border border-[color:var(--signal-violet)]/40 bg-[color:var(--signal-violet)]/10 px-2.5 py-1 text-[color:var(--signal-violet)] font-medium w-fit">
-          auth service
-        </span>
-      </div>
-
-      {/* Vector trace panel */}
-      <div className="relative mt-5 h-[160px] rounded-md border border-border bg-[oklch(0.09_0.012_75)] overflow-hidden">
-        {/* radial rings */}
-        <div className="absolute inset-0 opacity-60">
-          <div className="absolute left-1/2 top-1/2 h-[120px] w-[120px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-[color:var(--signal-amber)]/15" />
-          <div className="absolute left-1/2 top-1/2 h-[80px] w-[80px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-[color:var(--signal-amber)]/20" />
-          <div className="absolute left-1/2 top-1/2 h-[44px] w-[44px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-[color:var(--signal-amber)]/30" />
-        </div>
-        {/* highlighted main node */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-          <div className="trace-glow pulse-trace h-3 w-3 rounded-full bg-[color:var(--signal-amber)]" />
-        </div>
-        {/* satellite nodes */}
-        <Dot x="22%" y="34%" color="var(--signal-blue)" size={7} />
-        <Dot x="78%" y="28%" color="var(--signal-violet)" size={8} />
-        <Dot x="74%" y="74%" color="var(--signal-amber)" size={6} />
-        <Dot x="18%" y="72%" color="var(--signal-amber)" size={5} />
-        <Dot x="34%" y="52%" color="var(--signal-violet)" size={4} />
-        <Dot x="62%" y="46%" color="var(--signal-blue)" size={4} />
-        {/* faint connection lines */}
-        <svg className="absolute inset-0 h-full w-full opacity-40" aria-hidden>
-          <line x1="50%" y1="50%" x2="22%" y2="34%" stroke="oklch(0.78 0.13 72 / 0.35)" strokeWidth="1" />
-          <line x1="50%" y1="50%" x2="78%" y2="28%" stroke="oklch(0.78 0.13 72 / 0.35)" strokeWidth="1" />
-          <line x1="50%" y1="50%" x2="74%" y2="74%" stroke="oklch(0.78 0.13 72 / 0.3)" strokeWidth="1" />
-          <line x1="50%" y1="50%" x2="18%" y2="72%" stroke="oklch(0.78 0.13 72 / 0.25)" strokeWidth="1" />
-        </svg>
-        <p className="absolute left-3 top-2.5 text-[10px] font-mono uppercase tracking-wider text-muted-foreground/60">
-          memory field
-        </p>
-        <p className="absolute right-3 bottom-2 text-[10px] font-mono text-muted-foreground/60">
-          bind(s) ⊕ bind(p) ⊕ bind(o)
-        </p>
-      </div>
-
-      {/* Probe result */}
-      <div className="mt-4 rounded-md border border-[color:var(--signal-amber)]/30 bg-[color:var(--signal-amber)]/[0.06] px-4 py-3">
-        <p className="text-[10px] font-mono uppercase tracking-wider text-[color:var(--signal-amber)]/80">
-          Probe
-        </p>
-        <p className="mt-1 text-[14px] text-foreground/90">
-          “Who handles login?”
-          <span className="text-muted-foreground"> → </span>
-          <span className="text-[color:var(--signal-amber)] font-medium">
-            Sarah
-          </span>
-          <span className="text-muted-foreground"> · </span>
-          <span className="text-[color:var(--signal-violet)] font-medium">
-            auth service
-          </span>
-        </p>
+    <div className={`flex items-center gap-3 ${className}`}>
+      <span className="marginalia-label w-[68px] shrink-0 text-right">
+        {label}
+      </span>
+      <div className="flex h-3.5 flex-1 items-stretch gap-[1px]">
+        {amplitudes.map((a, i) => (
+          <span
+            key={i}
+            className="flex-1 rounded-[1px]"
+            style={{
+              background: base,
+              opacity: Math.min(0.95, Math.max(0.08, a)),
+            }}
+          />
+        ))}
       </div>
     </div>
   );
 }
 
-function Dot({
-  x,
-  y,
+function Pill({
   color,
-  size,
+  children,
 }: {
-  x: string;
-  y: string;
-  color: string;
-  size: number;
+  color: SignalColor;
+  children: React.ReactNode;
 }) {
   return (
     <span
-      className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full"
+      className="w-fit rounded-md border px-2.5 py-1 font-medium"
       style={{
-        left: x,
-        top: y,
-        width: size,
-        height: size,
-        background: color,
-        boxShadow: `0 0 8px ${color}`,
-        opacity: 0.85,
+        borderColor: oklch(color, 0.4),
+        background: oklch(color, 0.1),
+        color: oklch(color),
       }}
-    />
+    >
+      {children}
+    </span>
+  );
+}
+
+export function HeroDemo() {
+  const subjAmps = bindingAmplitudes("subj", TRIPLE.subject, STRIP_CELLS);
+  const predAmps = bindingAmplitudes("pred", TRIPLE.predicate, STRIP_CELLS);
+  const objAmps = bindingAmplitudes("obj", TRIPLE.object, STRIP_CELLS);
+
+  const traceCells = Array.from({ length: TRACE_CELLS }, (_, i) => {
+    const s = hash(`subj::${TRIPLE.subject}`, i);
+    const p = hash(`pred::${TRIPLE.predicate}`, i);
+    const o = hash(`obj::${TRIPLE.object}`, i);
+    const max = Math.max(s, p, o);
+    const color =
+      max === s ? SIGNAL.amber : max === p ? SIGNAL.blue : SIGNAL.violet;
+    const amplitude = 0.25 + ((s + p + o) / 3) * 0.7;
+    return { color: oklch(color), amplitude };
+  });
+
+  return (
+    <figure
+      aria-label="Diagram: a sentence decomposes into a subject/predicate/object triple, each role is bound to its value, the three bindings superpose into one 1024-dimensional trace, and an algebraic probe recovers the answer."
+      className="demo-panel relative w-full p-6 sm:p-7"
+    >
+      <header className="flex items-baseline justify-between">
+        <p className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground">
+          Figure 1 · Encode then probe
+        </p>
+        <span className="font-mono text-[10px] text-muted-foreground/70">
+          dim {TRACE_DIMS}
+        </span>
+      </header>
+
+      <div className="mt-5 rounded-md border border-border bg-card/60 px-4 py-3">
+        <p className="marginalia-label">fact</p>
+        <p className="mt-1 text-[15px] leading-snug text-foreground">{FACT}</p>
+      </div>
+
+      <Operator label="decompose" />
+
+      <div className="grid grid-cols-[68px_1fr] gap-x-3 gap-y-1.5 text-sm">
+        <span className="marginalia-label self-center text-right">subject</span>
+        <Pill color={SIGNAL.amber}>{TRIPLE.subject}</Pill>
+        <span className="marginalia-label self-center text-right">predicate</span>
+        <Pill color={SIGNAL.blue}>{TRIPLE.predicate}</Pill>
+        <span className="marginalia-label self-center text-right">object</span>
+        <Pill color={SIGNAL.violet}>{TRIPLE.object}</Pill>
+      </div>
+
+      <Operator label="bind  ⊛" />
+
+      <div className="space-y-1.5">
+        <Strip amplitudes={subjAmps} color={SIGNAL.amber} label="r_s ⊛ v_s" />
+        <Strip amplitudes={predAmps} color={SIGNAL.blue} label="r_p ⊛ v_p" />
+        <Strip amplitudes={objAmps} color={SIGNAL.violet} label="r_o ⊛ v_o" />
+      </div>
+
+      <Operator label="superpose  +" />
+
+      <div className="flex items-center gap-3">
+        <span className="marginalia-label w-[68px] shrink-0 text-right">
+          trace
+        </span>
+        <div className="relative h-6 flex-1 overflow-hidden rounded-[2px] border border-border/70">
+          <div className="absolute inset-0 flex items-stretch gap-[1px]">
+            {traceCells.map((c, i) => (
+              <span
+                key={i}
+                className="flex-1"
+                style={{ background: c.color, opacity: c.amplitude }}
+              />
+            ))}
+          </div>
+          <div
+            aria-hidden
+            className="probe-sweep pointer-events-none absolute inset-y-0 w-[14%]"
+            style={{
+              background: `linear-gradient(90deg, transparent, ${oklch(SIGNAL.amber, 0.67)}, transparent)`,
+              mixBlendMode: "screen",
+            }}
+          />
+        </div>
+      </div>
+      <p className="ml-[80px] mt-1.5 font-mono text-[10px] text-muted-foreground/70">
+        {TRACE_CELLS}-cell preview of one {TRACE_DIMS}-d vector
+      </p>
+
+      <Operator label="probe" />
+
+      <div
+        className="rounded-md border px-4 py-3"
+        style={{
+          borderColor: oklch(SIGNAL.amber, 0.3),
+          background: oklch(SIGNAL.amber, 0.06),
+        }}
+      >
+        <p
+          className="marginalia-label"
+          style={{ color: oklch(SIGNAL.amber, 0.8) }}
+        >
+          unbind
+        </p>
+        <p className="mt-1 text-[14px] text-foreground/90">
+          &ldquo;Who handles login?&rdquo;
+          <span className="text-muted-foreground"> → </span>
+          <span className="font-medium" style={{ color: oklch(SIGNAL.amber) }}>
+            {TRIPLE.subject}
+          </span>
+          <span className="text-muted-foreground"> · </span>
+          <span
+            className="font-medium"
+            style={{ color: oklch(SIGNAL.violet) }}
+          >
+            {TRIPLE.object}
+          </span>
+        </p>
+      </div>
+    </figure>
+  );
+}
+
+function Operator({ label }: { label: string }) {
+  return (
+    <div aria-hidden className="my-3 flex items-center gap-3 pl-[68px]">
+      <span className="h-3 w-px bg-border" />
+      <span className="font-mono text-[10.5px] lowercase tracking-[0.04em] text-muted-foreground/80">
+        {label}
+      </span>
+      <span className="h-px flex-1 bg-border/40" />
+    </div>
   );
 }

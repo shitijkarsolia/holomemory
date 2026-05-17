@@ -147,3 +147,38 @@
 .pulse-trace {
   animation: pulse-trace 2.6s ease-in-out infinite;
 }
+
+@keyframes probe-sweep {
+  0% { transform: translateX(-12%); opacity: 0; }
+  18% { opacity: 0.9; }
+  82% { opacity: 0.9; }
+  100% { transform: translateX(112%); opacity: 0; }
+}
+.probe-sweep {
+  animation: probe-sweep 4.2s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+.marginalia-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: lowercase;
+  letter-spacing: 0.02em;
+  color: var(--muted-foreground);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .pulse-trace,
+  .probe-sweep,
+  .animate-glitch,
+  .animate-pulse {
+    animation: none !important;
+  }
+}

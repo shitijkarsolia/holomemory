@@ -6,8 +6,7 @@ export function WhatSection() {
       id="what"
       className="mx-auto max-w-3xl px-6 py-20 sm:py-24 border-t border-border/30"
     >
-      <p className="eyebrow">What it is</p>
-      <h2 className="mt-3 font-serif text-3xl sm:text-4xl leading-[1.1] tracking-tight text-foreground">
+      <h2 className="font-serif text-3xl sm:text-4xl leading-[1.1] tracking-tight text-foreground">
         What is holographic memory?
       </h2>
       <div className="mt-6 space-y-4 text-[16px] leading-relaxed text-foreground/85">

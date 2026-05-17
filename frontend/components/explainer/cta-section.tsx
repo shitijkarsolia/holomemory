@@ -5,8 +5,7 @@ import Link from "next/link";
 export function CtaSection() {
   return (
     <section className="mx-auto max-w-3xl px-6 py-20 sm:py-24 border-t border-border/30 text-center">
-      <p className="eyebrow">Go deeper</p>
-      <h2 className="mt-3 font-serif text-3xl sm:text-4xl leading-[1.1] tracking-tight text-foreground">
+      <h2 className="font-serif text-3xl sm:text-4xl leading-[1.1] tracking-tight text-foreground">
         Open the interactive playground
       </h2>
       <p className="mt-4 max-w-xl mx-auto text-[16px] leading-relaxed text-muted-foreground">

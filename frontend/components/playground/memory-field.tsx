@@ -2,15 +2,18 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import type { FieldResponse } from "@/lib/types";
+import type { FieldResponse, Memory } from "@/lib/types";
 import { useForceLayout } from "@/lib/use-force-layout";
 import { motion, AnimatePresence } from "framer-motion";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 interface Props {
   highlightedIds?: string[];
   lastEncodedId?: string | null;
 }
+
+const VIEW_W = 600;
+const VIEW_H = 400;
 
 export function MemoryField({ highlightedIds = [], lastEncodedId }: Props) {
   const { data } = useQuery<FieldResponse>({
@@ -19,12 +22,19 @@ export function MemoryField({ highlightedIds = [], lastEncodedId }: Props) {
     refetchInterval: 5000,
   });
 
-  const memories = data?.memories || [];
-  const edges = data?.edges || [];
+  const memories = useMemo(() => data?.memories ?? [], [data?.memories]);
+  const edges = useMemo(() => data?.edges ?? [], [data?.edges]);
 
   const positions = useForceLayout(memories, edges);
 
   const highlightSet = useMemo(() => new Set(highlightedIds), [highlightedIds]);
+
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const hovered = useMemo(
+    () => memories.find((m) => m.id === hoveredId) ?? null,
+    [memories, hoveredId],
+  );
+  const hoveredPos = hoveredId ? positions.get(hoveredId) : null;
 
   if (memories.length === 0) {
     return (
@@ -34,7 +44,7 @@ export function MemoryField({ highlightedIds = [], lastEncodedId }: Props) {
             Memory field is empty
           </p>
           <p className="mt-2 text-[13.5px] leading-relaxed text-muted-foreground">
-            Click <span className="text-foreground/85">Seed demo memories</span>{" "}
+            Click <span className="text-foreground/85">Seed the lab</span>{" "}
             above, or teach a memory on the left. Nodes will appear here and
             cluster by shared entities.
           </p>
@@ -49,9 +59,10 @@ export function MemoryField({ highlightedIds = [], lastEncodedId }: Props) {
   return (
     <div className="relative h-full w-full overflow-hidden rounded-xl border border-border/30 bg-[oklch(0.08_0_0)]">
       <svg
-        viewBox="0 0 600 400"
+        viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
         className="h-full w-full"
         preserveAspectRatio="xMidYMid meet"
+        onMouseLeave={() => setHoveredId(null)}
       >
         <defs>
           <filter id="glow">
@@ -74,6 +85,8 @@ export function MemoryField({ highlightedIds = [], lastEncodedId }: Props) {
           const p1 = positions.get(edge.source_id);
           const p2 = positions.get(edge.target_id);
           if (!p1 || !p2) return null;
+          const isHoverEdge =
+            hoveredId === edge.source_id || hoveredId === edge.target_id;
           return (
             <line
               key={i}
@@ -82,8 +95,12 @@ export function MemoryField({ highlightedIds = [], lastEncodedId }: Props) {
               x2={p2.x}
               y2={p2.y}
               stroke="oklch(0.65 0.17 160)"
-              strokeOpacity={0.08 + edge.shared_entities.length * 0.04}
-              strokeWidth={0.5}
+              strokeOpacity={
+                isHoverEdge
+                  ? 0.45
+                  : 0.08 + edge.shared_entities.length * 0.04
+              }
+              strokeWidth={isHoverEdge ? 1 : 0.5}
             />
           );
         })}
@@ -96,6 +113,7 @@ export function MemoryField({ highlightedIds = [], lastEncodedId }: Props) {
             const isNew = mem.id === lastEncodedId;
             const isLowTrust = mem.trust < 0.3;
             const isContradiction = mem.tags.includes("contradiction");
+            const isHovered = hoveredId === mem.id;
             const radius = 4 + mem.trust * 6;
 
             return (
@@ -105,7 +123,16 @@ export function MemoryField({ highlightedIds = [], lastEncodedId }: Props) {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0 }}
                 transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                onMouseEnter={() => setHoveredId(mem.id)}
+                style={{ cursor: "pointer" }}
               >
+                <circle
+                  cx={pos.x}
+                  cy={pos.y}
+                  r={radius + 8}
+                  fill="transparent"
+                  pointerEvents="all"
+                />
                 <motion.circle
                   cx={pos.x}
                   cy={pos.y}
@@ -117,10 +144,20 @@ export function MemoryField({ highlightedIds = [], lastEncodedId }: Props) {
                         ? "oklch(0.4 0.05 160)"
                         : "oklch(0.65 0.17 160)"
                   }
-                  fillOpacity={isHighlighted ? 0.9 : 0.3 + mem.trust * 0.4}
-                  filter={isHighlighted ? "url(#glow-strong)" : isNew ? "url(#glow)" : undefined}
+                  fillOpacity={
+                    isHovered || isHighlighted
+                      ? 0.95
+                      : 0.3 + mem.trust * 0.4
+                  }
+                  filter={
+                    isHighlighted || isHovered
+                      ? "url(#glow-strong)"
+                      : isNew
+                        ? "url(#glow)"
+                        : undefined
+                  }
                   animate={
-                    isHighlighted
+                    isHighlighted || isHovered
                       ? { r: radius * 1.4, fillOpacity: 0.95 }
                       : { r: radius, fillOpacity: 0.3 + mem.trust * 0.4 }
                   }
@@ -145,24 +182,88 @@ export function MemoryField({ highlightedIds = [], lastEncodedId }: Props) {
         </AnimatePresence>
       </svg>
 
-      <div className="absolute bottom-3 left-3 flex items-center gap-3 text-[9px] text-muted-foreground/60">
-        <span className="flex items-center gap-1">
-          <span className="inline-block h-2 w-2 rounded-full bg-primary/60" />
-          Memory
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="inline-block h-2 w-2 rounded-full bg-destructive/60" />
-          Conflict
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="inline-block h-2 w-2 rounded-full bg-primary/20" />
-          Low trust
-        </span>
-      </div>
+      {hovered && hoveredPos && (
+        <NodeTooltip mem={hovered} x={hoveredPos.x} y={hoveredPos.y} />
+      )}
 
-      <div className="absolute top-3 right-3 font-mono text-[9px] text-muted-foreground/40">
-        {memories.length} traces
+      <FieldLegend total={memories.length} />
+    </div>
+  );
+}
+
+function NodeTooltip({ mem, x, y }: { mem: Memory; x: number; y: number }) {
+  const leftPct = (x / VIEW_W) * 100;
+  const topPct = (y / VIEW_H) * 100;
+  const placeLeft = leftPct > 60;
+  const placeAbove = topPct > 65;
+
+  return (
+    <div
+      className="pointer-events-none absolute z-10 max-w-[260px] rounded-md border border-border/70 bg-card/95 px-3 py-2.5 shadow-lg backdrop-blur-sm"
+      style={{
+        left: `${leftPct}%`,
+        top: `${topPct}%`,
+        transform: `translate(${placeLeft ? "calc(-100% - 14px)" : "14px"}, ${
+          placeAbove ? "calc(-100% - 14px)" : "14px"
+        })`,
+      }}
+    >
+      <p className="text-[12.5px] leading-snug text-foreground">{mem.text}</p>
+      <div className="mt-2 flex flex-wrap gap-x-3 gap-y-0.5 font-mono text-[10.5px] text-muted-foreground">
+        <span>
+          trust{" "}
+          <span
+            className="text-foreground/80"
+            style={
+              mem.trust < 0.3
+                ? { color: "var(--signal-red)" }
+                : undefined
+            }
+          >
+            {mem.trust.toFixed(2)}
+          </span>
+        </span>
+        <span>
+          source <span className="text-foreground/80">{mem.source}</span>
+        </span>
+        {mem.tags.length > 0 && (
+          <span>
+            tags <span className="text-foreground/80">{mem.tags.join(", ")}</span>
+          </span>
+        )}
       </div>
     </div>
+  );
+}
+
+function FieldLegend({ total }: { total: number }) {
+  return (
+    <>
+      <div className="pointer-events-none absolute top-3 right-3 font-mono text-[10.5px] text-muted-foreground/70">
+        {total} traces
+      </div>
+
+      <div className="pointer-events-none absolute bottom-3 left-3 right-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 font-mono text-[10.5px] text-muted-foreground/80">
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block h-2.5 w-2.5 rounded-full bg-[oklch(0.65_0.17_160)]/85" />
+          memory
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block h-2.5 w-2.5 rounded-full bg-[oklch(0.4_0.05_160)]/85" />
+          low trust
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block h-2.5 w-2.5 rounded-full bg-[oklch(0.6_0.2_25)]/85" />
+          contradiction
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block h-px w-4 bg-[oklch(0.65_0.17_160)]/60" />
+          shared entity
+        </span>
+        <span className="ml-auto hidden text-muted-foreground/60 sm:inline">
+          hover a node for details
+        </span>
+      </div>
+    </>
   );
 }

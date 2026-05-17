@@ -6,12 +6,16 @@ import { Atom } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
+  { href: "/", label: "Home" },
   { href: "/playground", label: "Playground" },
   { href: "/about", label: "About" },
 ];
 
 export function TopNav() {
   const pathname = usePathname();
+
+  const isActive = (href: string) =>
+    href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/");
 
   return (
     <header className="fixed top-0 inset-x-0 z-40 h-16 border-b border-border bg-background/85 backdrop-blur-md">
@@ -27,7 +31,7 @@ export function TopNav() {
 
         <nav className="flex items-center gap-1">
           {NAV_ITEMS.map(({ href, label }) => {
-            const active = pathname === href || pathname.startsWith(href + "/");
+            const active = isActive(href);
             return (
               <Link
                 key={href}

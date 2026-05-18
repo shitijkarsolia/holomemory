@@ -111,6 +111,16 @@ function encodeFact(s: string, p: string, o: string): Float64Array {
 }
 
 function UnbindDemo() {
+  return <UnbindDemoBody />;
+}
+
+/** Standalone export so the homepage can showcase the canonical demo without
+ *  pulling in the rest of the lab. */
+export function UnbindDemoStandalone() {
+  return <UnbindDemoBody />;
+}
+
+function UnbindDemoBody() {
   const [subject, setSubject] = useState("maya");
   const [predicate, setPredicate] = useState("prefer");
   const [object, setObject] = useState("cursor");

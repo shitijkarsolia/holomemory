@@ -1,19 +1,19 @@
 "use client";
 
 const ROWS: Array<{ label: string; kw: string; rag: string; holo: string }> = [
-  { label: "Indirect recall", kw: "No", rag: "Yes", holo: "Partial" },
-  { label: "Encodes structure", kw: "No", rag: "No", holo: "Yes" },
-  { label: "Trust scoring", kw: "No", rag: "No", holo: "Yes" },
-  { label: "Explains matches", kw: "No", rag: "No", holo: "Yes" },
-  { label: "Needs external model", kw: "No", rag: "Yes", holo: "No" },
+  { label: "Recover a stored value by name", kw: "No", rag: "No", holo: "Yes (unbind)" },
+  { label: "Encodes role / structure", kw: "No", rag: "Weak", holo: "Yes" },
+  { label: "Many facts in one vector", kw: "No (per-token index)", rag: "No (per-doc vectors)", holo: "Yes" },
+  { label: "Semantic generalization", kw: "No", rag: "Strong", holo: "Weak (no learned embeddings)" },
+  { label: "Graceful under noisy probes", kw: "Cliff", rag: "Moderate", holo: "Smooth degradation" },
+  { label: "Explainable scoring", kw: "Yes", rag: "Opaque", holo: "Yes (per-component)" },
+  { label: "Needs an embedding model", kw: "No", rag: "Yes", holo: "No" },
   { label: "Runs fully local", kw: "Yes", rag: "Depends", holo: "Yes" },
-  { label: "Semantic generalization", kw: "No", rag: "Strong", holo: "Weak" },
-  { label: "Retrieval latency", kw: "Fast", rag: "Moderate", holo: "Fast" },
   {
     label: "Best fit",
     kw: "Exact lookup over small text",
     rag: "Semantic search over documents",
-    holo: "Structured local agent facts",
+    holo: "Compact structured memory, algebraic queries",
   },
 ];
 
@@ -21,12 +21,11 @@ export function ComparisonSection() {
   return (
     <section className="mx-auto max-w-4xl px-6 py-20 sm:py-24 border-t border-border/30">
       <h2 className="font-serif text-3xl sm:text-4xl leading-[1.1] tracking-tight text-foreground">
-        Where it fits
+        How it compares
       </h2>
       <p className="mt-4 max-w-2xl text-[16px] leading-relaxed text-muted-foreground">
-        This isn&rsquo;t a replacement for RAG or vector databases. It&rsquo;s a
-        different point in the design space, optimized for lightweight, local,
-        structured agent memory.
+        HRR isn&rsquo;t a replacement for keyword search or RAG; it&rsquo;s a
+        different point in the design space. The table is the honest cross-cut.
       </p>
 
       <div className="mt-8 overflow-x-auto rounded-md border border-border bg-card/30">
@@ -41,7 +40,7 @@ export function ComparisonSection() {
                 RAG / Vector DB
               </th>
               <th className="py-3 px-4 font-mono text-[11px] uppercase tracking-wider text-[color:var(--signal-amber)]">
-                HoloMem
+                HRR
               </th>
             </tr>
           </thead>
@@ -66,9 +65,9 @@ export function ComparisonSection() {
       </div>
 
       <p className="mt-5 text-[13px] text-muted-foreground">
-        HoloMem is strongest for air-gapped, single-agent, dependency-light
-        setups where you want transparent, tunable retrieval over structured
-        facts.
+        The point of the lab and the applied demo is to make every cell of that
+        table land as something you&rsquo;ve actually watched happen, not
+        marketing copy.
       </p>
     </section>
   );

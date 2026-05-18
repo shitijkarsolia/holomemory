@@ -1,25 +1,27 @@
 # HoloMemory
 
-A local-first agent memory lab that implements HRR-style vector-symbolic memory with FastAPI, SQLite, NumPy, and an interactive Next.js playground.
+A working interactive reference for **Holographic Reduced Representations (HRR)** — a 30-year-old idea for cramming structured facts into a single fixed-size vector you can do algebra on.
+
+The site is structured around the four HRR operations (bind, superpose, unbind, cleanup) and a small applied example showing what they enable: a memory system with role-aware retrieval and source trust.
 
 ![HoloMemory homepage hero: a sentence decomposes into a subject/predicate/object triple, each role binds into a deterministic amplitude strip, the three superpose into a single 1024-dimensional trace, and an algebraic probe recovers the answer.](frontend/public/screenshots/home-hero-desktop.png)
 
-## Why this exists
+## What's here
 
-AI agents need memory systems that go beyond simple key-value stores or embedding-based RAG. HoloMemory demonstrates how structured memories can be encoded into high-dimensional vector traces using algebraic operations, then retrieved approximately, without requiring external ML models or paid APIs.
+- **HRR Lab**: four interactives that exercise the operations only HRR provides — recover a stored value by name (`unbind` + `cleanup`), tell role-aware memories apart when keyword scoring can't, measure how many facts fit in one 1024-d vector before recall starts losing them, and watch HRR degrade smoothly under noise where a keyword index would fall off a cliff.
+- **Applied example**: a small memory system that uses HRR underneath, plus a stemmed keyword index for literal matches and a per-memory trust score that breaks ties when sources disagree.
+- **Playground**: hands-on sandbox for both — teach facts, query, inject noise, create contradictions, watch the memory field react.
+- **Parity**: identical Python and TypeScript implementations of the algebra, verified by `scripts/parity_check.mjs` so the live JS demo matches the FastAPI backend bit-for-bit.
 
-This is a portfolio project that makes AI infrastructure thinking visible: vector-symbolic architectures, retrieval system design, full-stack engineering, and technical communication.
+## What it isn't
 
-## What it demonstrates
+Not a competitor to RAG, vector DBs, or production embedding stacks. HRR has no semantic generalization (`editor` and `IDE` are uncorrelated symbol vectors) and capacity is finite (~50 structured facts cleanly in 1024 dimensions). It's an unusual, principled point in the design space, and this site is the smallest honest demonstration of what it can do.
 
-- HRR-style holographic memory encoding (binding, superposition, unbinding)
-- Three retrieval strategies with explainable scoring (keyword, holographic, hybrid)
-- Structured memory records with trust scores, entities, and status lifecycle
-- Interactive playground: teach facts, query fuzzy questions, inject noise, create contradictions
-- Side-by-side retrieval mode comparison (Recall Duel)
-- Force-directed memory field visualization
-- FastAPI backend with comprehensive test coverage (27 tests)
-- No external LLM or embedding API dependencies
+## Test coverage
+
+- **36 Python tests** covering HRR primitives, the four lab algorithms (chained unbind, role-filler distinction, capacity sweep, noise tolerance), retrieval strategies, and the FastAPI surface.
+- **TypeScript HRR engine** type-checked end-to-end (`npx tsc --noEmit`).
+- **Tokenizer parity**: Snowball English (PyStemmer ↔ snowball-stemmers) byte-identical across a 20-string corpus.
 
 ## Architecture
 

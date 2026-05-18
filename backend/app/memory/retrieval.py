@@ -18,6 +18,16 @@ from app.schemas import (
 )
 from app.services.memory_service import get_all_vectors, list_memories
 
+# Weights for the hybrid scoring formula. Kept in one place so the explainer
+# UI (BiggestComponent) can use identical weights when deciding which
+# component drove a result.
+HYBRID_WEIGHTS = {
+    "holographic": 0.4,
+    "keyword": 0.3,
+    "trust": 0.15,
+    "entity": 0.15,
+}
+
 
 @dataclass
 class _ScoredMemory:
@@ -168,10 +178,10 @@ def _hybrid(
         sm.entity_overlap = entity_overlap
 
         sm.final_score = (
-            0.4 * sm.holographic_score
-            + 0.3 * sm.keyword_score
-            + 0.15 * sm.trust_score
-            + 0.15 * sm.entity_overlap
+            HYBRID_WEIGHTS["holographic"] * sm.holographic_score
+            + HYBRID_WEIGHTS["keyword"] * sm.keyword_score
+            + HYBRID_WEIGHTS["trust"] * sm.trust_score
+            + HYBRID_WEIGHTS["entity"] * sm.entity_overlap
         )
 
         if sm.holographic_score > 0.1:
@@ -188,11 +198,13 @@ def _hybrid(
 
 
 def _compute_entity_overlap(mem: Memory, query_tokens: list[str]) -> float:
-    mem_entities = {e.lower() for e in (mem.entities or [])}
+    mem_entities: set[str] = set()
+    for e in (mem.entities or []):
+        mem_entities.update(_tokenize(e))
     if mem.subject:
-        mem_entities.add(mem.subject.lower())
+        mem_entities.update(_tokenize(mem.subject))
     if mem.object:
-        mem_entities.add(mem.object.lower())
+        mem_entities.update(_tokenize(mem.object))
 
     if not mem_entities or not query_tokens:
         return 0.0
@@ -202,7 +214,9 @@ def _compute_entity_overlap(mem: Memory, query_tokens: list[str]) -> float:
 
 
 def _add_entity_reasons(sm: _ScoredMemory, mem: Memory, query_tokens: list[str]):
-    entities = {e.lower() for e in (mem.entities or [])}
+    entities: set[str] = set()
+    for e in (mem.entities or []):
+        entities.update(_tokenize(e))
     matched = [t for t in query_tokens if t in entities]
     if matched:
         sm.reasons.append(f"Matched entities: {', '.join(matched)}")

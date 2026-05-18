@@ -16,8 +16,6 @@ let lastCheck = 0;
 const CHECK_INTERVAL = 30_000;
 const HEALTH_TIMEOUT = 2000;
 
-const clientEngine = new ClientEngine();
-
 async function checkBackend(): Promise<boolean> {
   const now = Date.now();
   if (backendStatus !== "unknown" && now - lastCheck < CHECK_INTERVAL) {
@@ -61,7 +59,19 @@ async function withFallback<T>(remoteFn: () => Promise<T>, localFn: () => Promis
   return localFn();
 }
 
-export const api = {
+export type Api = ReturnType<typeof makeApi>;
+
+/**
+ * Build an `api` object backed by a freshly constructed `ClientEngine`.
+ *
+ * The playground uses the module-level `api` singleton (below) so every panel
+ * sees the same memory field. The homepage explainer blocks (encode/recall/trust)
+ * call `makeApi()` in a `useMemo` so each block has its own private store and
+ * the demos can't leak state into each other.
+ */
+export function makeApi(engine: ClientEngine = new ClientEngine()) {
+  const clientEngine = engine;
+  return {
   health: () =>
     withFallback(
       () => request<{ status: string }>("/health"),
@@ -185,4 +195,10 @@ export const api = {
       () => request<{ status: string }>("/memory/reset", { method: "POST" }),
       () => clientEngine.reset()
     ),
-};
+  };
+}
+
+// Module-level singleton used by the playground (Teach / Memory field / Recall
+// share one store across all three columns). Homepage explainer blocks should
+// call `makeApi()` directly so each block gets its own private engine.
+export const api = makeApi();

@@ -14,6 +14,10 @@ from app.schemas import MemoryCreate, MemoryUpdate
 def create_memory(db: Session, data: MemoryCreate) -> Memory:
     subject, predicate, obj = _extract_spo(data)
 
+    existing = _find_duplicate(db, data.text, subject, predicate, obj)
+    if existing is not None:
+        return existing
+
     memory = Memory(
         id=str(uuid.uuid4()),
         text=data.text,
@@ -137,6 +141,31 @@ def get_memory_vector(db: Session, memory_id: str) -> np.ndarray | None:
 def get_all_vectors(db: Session) -> dict[str, np.ndarray]:
     records = db.query(MemoryVector).all()
     return {r.memory_id: np.frombuffer(r.vector, dtype=np.float64) for r in records}
+
+
+def _canonical_key(text: str, subject: str | None, predicate: str | None, obj: str | None) -> str:
+    parts = [text or "", subject or "", predicate or "", obj or ""]
+    return "␟".join(" ".join(p.lower().split()) for p in parts)
+
+
+def _find_duplicate(
+    db: Session,
+    text: str,
+    subject: str | None,
+    predicate: str | None,
+    obj: str | None,
+) -> Memory | None:
+    key = _canonical_key(text, subject, predicate, obj)
+    candidates = (
+        db.query(Memory)
+        .filter(Memory.status == "active")
+        .filter(Memory.text == text)
+        .all()
+    )
+    for m in candidates:
+        if _canonical_key(m.text, m.subject, m.predicate, m.object) == key:
+            return m
+    return None
 
 
 def _extract_spo(data: MemoryCreate) -> tuple[str | None, str | None, str | None]:

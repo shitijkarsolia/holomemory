@@ -1,19 +1,37 @@
 import type { Memory, MemoryCreate, MemoryUpdate, FieldEdge, FieldResponse } from "../types";
 import { encodeMemory } from "./encoder";
 
+function canonicalKey(
+  text: string,
+  subject: string | null,
+  predicate: string | null,
+  object: string | null,
+): string {
+  const norm = (s: string | null) => (s || "").toLowerCase().split(/\s+/).filter(Boolean).join(" ");
+  return [norm(text), norm(subject), norm(predicate), norm(object)].join("␟");
+}
+
 export class MemoryStore {
   private memories = new Map<string, Memory>();
   private vectors = new Map<string, Float64Array>();
+  private byCanonicalKey = new Map<string, string>();
 
   create(data: MemoryCreate): Memory {
-    const id = crypto.randomUUID();
-    const now = new Date().toISOString();
-
     const entities = data.entities || [];
     const tags = data.tags || [];
     const subject = data.subject || null;
     const predicate = data.predicate || null;
     const object = data.object || null;
+
+    const key = canonicalKey(data.text, subject, predicate, object);
+    const existingId = this.byCanonicalKey.get(key);
+    if (existingId) {
+      const existing = this.memories.get(existingId);
+      if (existing && existing.status === "active") return existing;
+    }
+
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
 
     const memory: Memory = {
       id,
@@ -42,6 +60,7 @@ export class MemoryStore {
 
     this.memories.set(id, memory);
     this.vectors.set(id, vector);
+    this.byCanonicalKey.set(key, id);
     return memory;
   }
 
@@ -89,6 +108,11 @@ export class MemoryStore {
 
     this.memories.set(id, updated);
     this.vectors.set(id, vector);
+    for (const [k, v] of this.byCanonicalKey) if (v === id) this.byCanonicalKey.delete(k);
+    this.byCanonicalKey.set(
+      canonicalKey(updated.text, updated.subject, updated.predicate, updated.object),
+      id,
+    );
     return updated;
   }
 
@@ -137,6 +161,7 @@ export class MemoryStore {
   reset(): void {
     this.memories.clear();
     this.vectors.clear();
+    this.byCanonicalKey.clear();
   }
 
   stats() {

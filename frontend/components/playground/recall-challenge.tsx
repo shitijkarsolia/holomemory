@@ -16,7 +16,7 @@ const EXAMPLE_QUERIES = [
   "What does Maya prefer?",
   "What stack does Atlas use?",
   "What changed about Maya's editor?",
-  "Which memory seems least trustworthy?",
+  "Where does Atlas store its memories?",
 ];
 
 interface Props {

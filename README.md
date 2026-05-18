@@ -76,6 +76,15 @@ Retrieval constructs a probe vector from the query and ranks stored traces by si
 
 ## Quickstart
 
+> **Note on the live demo.** The deployment at
+> [holomemory.vercel.app](https://holomemory.vercel.app) is pure client-side:
+> the FastAPI backend is *not* hosted there. Instead, `frontend/lib/hrr/` is a
+> TypeScript reimplementation of the same algebra and retrieval rules. The two
+> implementations are kept in lockstep — `scripts/dump_tokens.py` and
+> `scripts/parity_check.mjs` verify tokenizer parity, and `backend/tests/`
+> covers the Python side. To exercise the full stack locally, follow the steps
+> below.
+
 ### Prerequisites
 
 - Python 3.11+

@@ -11,12 +11,12 @@ export function HeroSection() {
       <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[1.05fr_1fr] lg:gap-14">
         <div className="order-1">
           <p className="eyebrow">
-            A portfolio project on Holographic Reduced Representations
+            A portfolio project
           </p>
           <h1 className="mt-4 font-serif text-[40px] leading-[1.05] tracking-tight text-foreground sm:text-[52px]">
-            One vector. Many facts.
+            Holographic Reduced
             <br />
-            Retrieved by name.
+            Representations
           </h1>
           <p className="mt-5 max-w-xl text-[17px] leading-relaxed text-muted-foreground">
             HRR is a way to store structured information (like &ldquo;Sarah owns

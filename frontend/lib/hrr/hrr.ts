@@ -63,3 +63,47 @@ export function cosineSimilarity(a: Float64Array, b: Float64Array): number {
   if (normA === 0 || normB === 0) return 0;
   return dot / (normA * normB);
 }
+
+export function cleanup(
+  probe: Float64Array,
+  vocabulary: Record<string, Float64Array>,
+  topK = 5,
+): { symbol: string; similarity: number }[] {
+  const scored: { symbol: string; similarity: number }[] = [];
+  for (const [name, vec] of Object.entries(vocabulary)) {
+    scored.push({ symbol: name, similarity: cosineSimilarity(probe, vec) });
+  }
+  scored.sort((a, b) => b.similarity - a.similarity);
+  return scored.slice(0, topK);
+}
+
+// Box-Muller transform driven by Math.random (used only inside demos that
+// explicitly need stochasticity — production code paths use seeded PRNG).
+function gaussianNoise(n: number): Float64Array {
+  const out = new Float64Array(n);
+  for (let i = 0; i < n; i += 2) {
+    let u1 = Math.random(), u2 = Math.random();
+    if (u1 < 1e-12) u1 = 1e-12;
+    const mag = Math.sqrt(-2 * Math.log(u1));
+    out[i] = mag * Math.cos(2 * Math.PI * u2);
+    if (i + 1 < n) out[i + 1] = mag * Math.sin(2 * Math.PI * u2);
+  }
+  return out;
+}
+
+/** Mix `level` fraction of unit-norm Gaussian noise into a vector. */
+export function corruptVector(vec: Float64Array, level: number): Float64Array {
+  const noise = gaussianNoise(vec.length);
+  let norm = 0;
+  for (let i = 0; i < noise.length; i++) norm += noise[i] * noise[i];
+  norm = Math.sqrt(norm);
+  if (norm > 0) for (let i = 0; i < noise.length; i++) noise[i] /= norm;
+  const out = new Float64Array(vec.length);
+  const a = 1 - level;
+  for (let i = 0; i < vec.length; i++) out[i] = a * vec[i] + level * noise[i];
+  let on = 0;
+  for (let i = 0; i < out.length; i++) on += out[i] * out[i];
+  on = Math.sqrt(on);
+  if (on > 0) for (let i = 0; i < out.length; i++) out[i] /= on;
+  return out;
+}

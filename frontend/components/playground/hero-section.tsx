@@ -98,14 +98,15 @@ export function HeroSection() {
       <div className="mx-auto max-w-[1400px]">
         <div className="grid gap-12 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
           <div>
-            <p className="eyebrow">The HoloMem lab</p>
+            <p className="eyebrow">Playground · HRR Lab + applied sandbox</p>
             <h1 className="mt-3 font-serif text-[36px] leading-[1.05] tracking-tight text-foreground sm:text-[44px]">
-              Teach an agent. Disturb its memory. Watch it remember.
+              Run the operations. Stress-test the memory.
             </h1>
             <p className="mt-5 max-w-xl text-[17px] leading-relaxed text-muted-foreground">
-              An interactive sandbox for the same algebra you saw on the
-              homepage. Add facts, ask indirect questions, inject noise,
-              and inspect every component score behind a result.
+              Below: four HRR interactives (unbind, capacity, role-binding,
+              noise), then a hands-on sandbox for the applied memory system
+              from the homepage. Seed the lab to load example memories you
+              can teach against, query, and disturb.
             </p>
 
             <div className="mt-7 flex flex-wrap items-center gap-3">

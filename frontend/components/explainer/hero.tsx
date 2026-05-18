@@ -11,7 +11,7 @@ export function HeroSection() {
       <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[1.05fr_1fr] lg:gap-14">
         <div className="order-1">
           <p className="eyebrow">
-            A portfolio project
+            Explainer
           </p>
           <h1 className="mt-4 font-serif text-[40px] leading-[1.05] tracking-tight text-foreground sm:text-[52px]">
             Holographic Reduced

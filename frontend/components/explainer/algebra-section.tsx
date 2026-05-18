@@ -27,9 +27,9 @@ const OPS: Op[] = [
         <em className="not-italic text-foreground/85">role</em> (like
         &ldquo;subject&rdquo;) and one for the{" "}
         <em className="not-italic text-foreground/85">value</em> (like{" "}
-        &ldquo;Sarah&rdquo;). Mix them together into a third list. The mix
-        looks unrelated to either input, but the mixing is reversible:{" "}
-        given one ingredient, you can recover the other.
+        &ldquo;Sarah&rdquo;). Mix them into a third list. The result looks
+        unrelated to either input, but the mixing is reversible. Give it one
+        ingredient back and you can recover the other.
       </>
     ),
     formula: "bind(role, value)  →  one vector",
@@ -65,7 +65,7 @@ const OPS: Op[] = [
         the bind operation using the role. The answer comes back a little
         noisy because the trace has other facts mixed in. A small lookup
         called a <span className="text-foreground/85">cleanup memory</span>{" "}
-        compares the noisy answer to known words and snaps to the closest one.
+        compares the noisy answer to known words and snaps to the closest.
       </>
     ),
     formula: "unbind(trace, role)  →  value  (approximately)",
@@ -84,10 +84,10 @@ export function AlgebraSection() {
             The math, in three simple operations
           </h2>
           <p className="mt-4 text-[16px] leading-relaxed text-muted-foreground">
-            Everything in the demo is built from three small functions on
-            lists of numbers. No neural network, no training. If you can mix
-            two ingredients and later separate them, you understand the whole
-            thing.
+            Everything in the demos is built from three small functions on
+            lists of numbers. No neural network. No training. If you can mix
+            two ingredients and later separate them, you understand the
+            whole thing.
           </p>
         </div>
 
@@ -139,11 +139,11 @@ export function AlgebraSection() {
             why it works
           </p>
           <p className="text-[15px] leading-relaxed text-foreground/80">
-            When the lists are long (1024 numbers here) and random, any two of
-            them are almost guaranteed to be different. Mixing spreads each
-            binding across all 1024 positions, so the bindings barely step on
-            each other when you add them. The same math that mixes also
-            unmixes. That&rsquo;s the whole trick.
+            When the lists are long (1024 numbers here) and random, any two
+            of them are almost guaranteed to be different. Mixing spreads
+            each binding across all 1024 positions, so the bindings barely
+            step on each other when you add them. The same math that mixes
+            also unmixes. That&rsquo;s the whole trick.
           </p>
         </div>
       </div>

@@ -7,7 +7,7 @@ export default function AboutPage() {
           About HoloMem
         </h1>
         <p className="mt-4 text-[16px] leading-relaxed text-muted-foreground">
-          How holographic memory works, explained for engineers.
+          How holographic memory works, for engineers who want the details.
         </p>
       </header>
 
@@ -16,13 +16,13 @@ export default function AboutPage() {
           What is holographic memory?
         </h2>
         <p className="text-[16px] leading-relaxed text-muted-foreground">
-          Holographic memory is a brain-inspired approach to storing and
-          retrieving information. Instead of indexing memories by keys or
-          keywords, each memory is encoded as a high-dimensional vector trace
-          using algebraic operations. Retrieval works by constructing a probe
-          vector and finding which stored traces are most similar: an
-          approximate, content-addressable lookup rather than an exact
-          database query.
+          Holographic memory is a brain-inspired way to store and retrieve
+          information. Instead of indexing memories by keys or keywords, each
+          memory becomes a high-dimensional vector trace built from a few
+          algebraic operations. To retrieve, you construct a probe vector and
+          find the stored traces most similar to it. It&rsquo;s an
+          approximate, content-addressable lookup, not an exact database
+          query.
         </p>
       </section>
 
@@ -32,7 +32,7 @@ export default function AboutPage() {
         </h2>
         <p className="text-[16px] leading-relaxed text-muted-foreground">
           Holographic Reduced Representations (HRR) use three core operations
-          to encode structured knowledge into fixed-size vectors.
+          to pack structured knowledge into fixed-size vectors.
         </p>
         <div className="mt-6 space-y-4">
           <article className="rounded-lg border border-border/40 bg-card/30 p-5">
@@ -40,8 +40,8 @@ export default function AboutPage() {
               Symbol vectors
             </h3>
             <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
-              Each concept becomes a unique 1024-dimensional vector, generated
-              deterministically from the symbol name. Unrelated symbols are
+              Each concept gets a unique 1024-dimensional vector, generated
+              deterministically from its name. Unrelated symbols come out
               nearly orthogonal.
             </p>
           </article>
@@ -51,9 +51,10 @@ export default function AboutPage() {
               Binding (circular convolution)
             </h3>
             <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
-              Associates two concepts: bind(SUBJECT, &ldquo;user&rdquo;)
-              creates a vector representing &ldquo;the subject is user&rdquo;.
-              Implemented via FFT. The result is dissimilar to both inputs.
+              Associates two concepts. bind(SUBJECT, &ldquo;user&rdquo;)
+              produces a vector representing &ldquo;the subject is
+              user&rdquo;. Implemented via FFT. The result looks dissimilar
+              to both inputs.
             </p>
           </article>
 
@@ -63,7 +64,7 @@ export default function AboutPage() {
             </h3>
             <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
               Multiple bindings are summed into a single trace vector. All
-              associations stored in one fixed-size vector. Lossy but
+              associations live in one fixed-size vector. Lossy, but
               approximately recoverable.
             </p>
           </article>
@@ -73,9 +74,9 @@ export default function AboutPage() {
               Unbinding (circular correlation)
             </h3>
             <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
-              Given a trace and a key, approximately recovers the bound value.
-              Cleanup memory maps the noisy result back to the nearest known
-              symbol.
+              Given a trace and a key, recovers the bound value
+              approximately. Cleanup memory maps the noisy result back to
+              the nearest known symbol.
             </p>
           </article>
         </div>
@@ -114,7 +115,7 @@ export default function AboutPage() {
                   Aspect
                 </th>
                 <th className="px-4 py-3 font-mono text-[11px] uppercase tracking-wider text-[color:var(--signal-amber)]">
-                  HoloMemory
+                  HRR
                 </th>
                 <th className="px-4 py-3 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
                   Vector DB + RAG

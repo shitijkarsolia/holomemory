@@ -9,10 +9,10 @@ export function CtaSection() {
         Open the lab
       </h2>
       <p className="mt-4 max-w-xl mx-auto text-[16px] leading-relaxed text-muted-foreground">
-        The playground hosts the full HRR Lab (four interactives), plus a
-        hands-on sandbox for the applied memory system: add facts, run
-        role-aware queries, inject noise, compare retrieval modes, watch the
-        memory field react.
+        The playground hosts the full HRR Lab (four interactives) and a
+        sandbox for the applied memory system. You can add facts, run
+        role-aware queries, inject noise, compare retrieval modes, and watch
+        the memory field react.
       </p>
       <div className="mt-7 flex items-center justify-center gap-3">
         <Link

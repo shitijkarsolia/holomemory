@@ -66,8 +66,8 @@ export function DistortionLab() {
             Distortion lab
           </h2>
           <p className="mt-3 text-[15.5px] leading-relaxed text-muted-foreground">
-            Stress-test the system. Add noise, create contradictions, see how
-            trust adapts. Each action updates the memory field above.
+            Stress-test the system. Add noise, create contradictions, watch
+            how trust adapts. Each action updates the memory field above.
           </p>
         </div>
 

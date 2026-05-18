@@ -24,8 +24,8 @@ export function ComparisonSection() {
         How it compares
       </h2>
       <p className="mt-4 max-w-2xl text-[16px] leading-relaxed text-muted-foreground">
-        HRR isn&rsquo;t a replacement for keyword search or RAG; it&rsquo;s a
-        different point in the design space. The table is the honest cross-cut.
+        HRR isn&rsquo;t a replacement for keyword search or RAG. It&rsquo;s a
+        different point in the design space. Here&rsquo;s the cross-cut.
       </p>
 
       <div className="mt-8 overflow-x-auto rounded-md border border-border bg-card/30">
@@ -65,9 +65,8 @@ export function ComparisonSection() {
       </div>
 
       <p className="mt-5 text-[13px] text-muted-foreground">
-        The point of the lab and the applied demo is to make every cell of that
-        table land as something you&rsquo;ve actually watched happen, not
-        marketing copy.
+        Every cell in that table is something you can actually watch happen in
+        the lab or the applied demo. None of it is marketing copy.
       </p>
     </section>
   );

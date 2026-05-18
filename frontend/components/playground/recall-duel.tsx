@@ -41,8 +41,8 @@ export function RecallDuel() {
           </h2>
           <p className="mt-3 text-[15.5px] leading-relaxed text-muted-foreground">
             Run the same query through plain keyword search and holographic
-            recall side by side. The differences show up clearly on indirect
-            or paraphrased questions.
+            recall side by side. The differences show up most clearly on
+            indirect or paraphrased questions.
           </p>
         </div>
 

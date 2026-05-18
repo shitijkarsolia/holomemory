@@ -187,9 +187,8 @@ export function EncodeBlock() {
         Encode a fact
       </h2>
       <p className="mt-4 text-[16px] leading-relaxed text-muted-foreground">
-        Pick a fact. You&rsquo;ll see it split into a role-value triple, watch
-        the three pieces mix into colored vectors, and finally see them stack
-        into one trace.
+        Pick a fact. You&rsquo;ll see it split into a role-value triple, the
+        three pieces mix into colored vectors, then stack into one trace.
       </p>
 
       <div className="mt-6 grid gap-2 sm:grid-cols-3">
@@ -401,9 +400,9 @@ export function EncodeBlock() {
                   <span aria-hidden className="mt-[10px] inline-block h-px w-2.5 shrink-0 bg-[color:var(--signal-violet)]/60" />
                   <span>
                     A query like &ldquo;who handles login?&rdquo; doesn&rsquo;t
-                    have to mention the answer directly &mdash; but it does need
-                    to share at least one keyword or named entity with the
-                    stored memory. Try the recall block below.
+                    have to mention the answer directly. It does need to share
+                    at least one keyword or named entity with the stored
+                    memory. Try the recall block below.
                   </span>
                 </li>
               </ul>

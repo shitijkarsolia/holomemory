@@ -1,6 +1,7 @@
+import { newStemmer } from "snowball-stemmers";
 import { symbolVector, bind, superpose, HRR_DIMENSION } from "./hrr";
 
-const STOPWORDS = new Set([
+export const STOPWORDS = new Set([
   "the", "a", "an", "is", "are", "was", "were", "be", "been", "being",
   "have", "has", "had", "do", "does", "did", "will", "would", "could",
   "should", "may", "might", "shall", "can", "to", "of", "in", "for",
@@ -13,9 +14,37 @@ const STOPWORDS = new Set([
   "who", "whom", "this", "that", "these", "those", "it", "its",
 ]);
 
+const STEMMER = newStemmer("english");
+const STEM_CACHE = new Map<string, string>();
+
+export function stem(token: string): string {
+  const cached = STEM_CACHE.get(token);
+  if (cached !== undefined) return cached;
+  const out = STEMMER.stem(token);
+  STEM_CACHE.set(token, out);
+  return out;
+}
+
 export function tokenize(text: string): string[] {
   const words = text.toLowerCase().match(/[a-z0-9]+/g) || [];
-  return words.filter((w) => !STOPWORDS.has(w) && w.length > 1);
+  const out: string[] = [];
+  for (const w of words) {
+    if (w.length <= 1) continue;
+    if (STOPWORDS.has(w)) continue;
+    out.push(stem(w));
+  }
+  return out;
+}
+
+export function tokenizeWithSurface(text: string): { stem: string; surface: string }[] {
+  const words = text.toLowerCase().match(/[a-z0-9]+/g) || [];
+  const out: { stem: string; surface: string }[] = [];
+  for (const w of words) {
+    if (w.length <= 1) continue;
+    if (STOPWORDS.has(w)) continue;
+    out.push({ stem: stem(w), surface: w });
+  }
+  return out;
 }
 
 export function encodeMemory(opts: {

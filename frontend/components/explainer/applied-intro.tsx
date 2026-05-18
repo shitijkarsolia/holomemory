@@ -13,12 +13,13 @@ export function AppliedIntro() {
         What if you built an agent&rsquo;s memory out of this?
       </h2>
       <p className="mt-4 text-[16px] leading-relaxed text-muted-foreground">
-        The remaining three sections show a small, working memory system that
-        uses HRR underneath, plus a keyword index for literal matches, and a
-        per-memory trust score that breaks ties when sources disagree. None of
-        this is the &ldquo;point&rdquo; of HRR &mdash; it&rsquo;s one applied
-        example of what the operations enable. You encode a fact, recall it
-        through an indirect query, and watch trust adjudicate a contradiction.
+        The next three sections show a small, working memory system that uses
+        HRR underneath, plus a keyword index for literal matches and a
+        per-memory trust score that breaks ties when sources disagree. This
+        isn&rsquo;t the point of HRR. It&rsquo;s just one applied example of
+        what the operations let you build. You&rsquo;ll encode a fact, recall
+        it through an indirect query, and watch trust adjudicate a
+        contradiction.
       </p>
     </section>
   );

@@ -12,18 +12,19 @@ export function WhatSection() {
       <div className="mt-6 space-y-4 text-[16px] leading-relaxed text-foreground/85">
         <p>
           Holographic Reduced Representations are a way to store structured
-          facts &mdash; like <em className="not-italic text-foreground/95">&ldquo;Sarah owns the auth
-          service&rdquo;</em> &mdash; as a single fixed-width vector, using
-          nothing more than vector addition and a kind of multiplication called
-          circular convolution. No training, no embeddings model: every symbol
-          is a deterministic high-dimensional vector seeded by its name.
+          facts as a single fixed-width vector. The math is just vector
+          addition and a kind of multiplication called circular convolution.
+          There&rsquo;s no training and no embeddings model. Every symbol you
+          care about (&ldquo;Sarah&rdquo;, &ldquo;owns&rdquo;, &ldquo;auth
+          service&rdquo;) becomes a high-dimensional random vector, generated
+          deterministically from its name.
         </p>
         <p>
-          There are four operations.{" "}
+          Four operations carry the whole system.{" "}
           <strong className="font-semibold text-[color:var(--signal-amber)]">
             Bind
           </strong>{" "}
-          glues two vectors into one whose shape is unlike either input.{" "}
+          glues two vectors into a new one that looks unlike either input.{" "}
           <strong className="font-semibold text-[color:var(--signal-blue)]">
             Superpose
           </strong>{" "}
@@ -31,8 +32,8 @@ export function WhatSection() {
           <strong className="font-semibold text-[color:var(--signal-violet)]">
             Unbind
           </strong>{" "}
-          is the algebraic inverse of bind &mdash; given the trace and one key,
-          it returns the noisy value.{" "}
+          reverses bind: give it the trace and one key, and it returns a noisy
+          version of the value.{" "}
           <strong className="font-semibold text-foreground">
             Cleanup
           </strong>{" "}
@@ -40,11 +41,11 @@ export function WhatSection() {
         </p>
         <p>
           Why care? Because together those four operations give you a memory
-          you can <em className="not-italic text-foreground/95">do math on</em>:
-          a single 1024-dimensional vector can hold ~50 structured facts and
-          give back any one of them by name, with confidence that degrades
-          smoothly under noise. The demos below show this happening in
-          milliseconds, with all the math visible.
+          you can do algebra on. A single 1024-dimensional vector can hold
+          around 50 structured facts and give back any one of them by name,
+          and confidence degrades smoothly under noise instead of falling off
+          a cliff. The demos below show that happening in milliseconds, with
+          every step visible.
         </p>
       </div>
 
@@ -53,12 +54,11 @@ export function WhatSection() {
           What this site is (and isn&rsquo;t)
         </p>
         <p className="mt-2 text-[14.5px] leading-relaxed text-muted-foreground">
-          A working interactive reference for HRR &mdash; the operations, the
-          tradeoffs, and a small applied example (a memory system with
-          role-aware retrieval and source trust). It is <em className="not-italic text-foreground/85">not</em> a
-          competitor to RAG, a vector database, or a production embedding
-          stack. It is the smallest honest demonstration of what vector-symbolic
-          memory can do.
+          An interactive reference for HRR: the operations, the tradeoffs, and
+          a small applied example that uses them. It is not a competitor to
+          RAG, a vector database, or a production embedding stack. It&rsquo;s
+          a small, working demonstration of what vector-symbolic memory can do
+          and where its limits are.
         </p>
       </div>
     </section>

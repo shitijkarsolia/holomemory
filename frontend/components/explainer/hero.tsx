@@ -11,19 +11,19 @@ export function HeroSection() {
       <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[1.05fr_1fr] lg:gap-14">
         <div className="order-1">
           <p className="eyebrow">
-            A portfolio project · vector-symbolic memory, hands-on
+            A portfolio project on Holographic Reduced Representations
           </p>
           <h1 className="mt-4 font-serif text-[40px] leading-[1.05] tracking-tight text-foreground sm:text-[52px]">
-            Holographic Reduced
+            One vector. Many facts.
             <br />
-            Representations, working.
+            Retrieved by name.
           </h1>
           <p className="mt-5 max-w-xl text-[17px] leading-relaxed text-muted-foreground">
-            HRR is a 30-year-old idea for cramming structured facts into one
-            fixed-size vector you can do algebra on &mdash; bind two concepts,
-            superpose many, then pull a stored value back out by unbinding.
-            This site is a working interactive reference: every demo runs the
-            real operations in your browser.
+            HRR is a way to store structured information (like &ldquo;Sarah owns
+            the auth service&rdquo;) inside a single fixed-size vector. You add
+            facts by binding role to value, then pull any one of them back out
+            by asking with a key. No model, no embeddings, no API. Every demo
+            here runs the real math in your browser.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-2">
@@ -42,7 +42,7 @@ export function HeroSection() {
               href="#unbind"
               className="glow-button rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-transform hover:scale-[1.02] active:scale-[0.98]"
             >
-              See the headline demo
+              See the demo
             </a>
             <Link
               href="/playground"

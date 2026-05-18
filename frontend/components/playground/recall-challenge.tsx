@@ -107,9 +107,9 @@ export function RecallChallenge({ onResults }: Props) {
         </div>
         <p className="mt-2 text-[11.5px] leading-snug text-muted-foreground/80">
           {mode === "hybrid" &&
-            "Weighted blend: 40% vector · 30% keywords · 15% trust · 15% entities."}
+            "Weighted blend: 40% vector, 30% keywords, 15% trust, 15% entities."}
           {mode === "holographic" &&
-            "Pure vector cosine similarity. Trust is ignored — stale or low-trust memories can win on raw overlap."}
+            "Pure vector cosine similarity. Trust is ignored, so stale or low-trust memories can win on raw overlap."}
           {mode === "keyword" &&
             "Fraction of query stems present in the memory. Trust is ignored."}
         </p>
@@ -172,15 +172,15 @@ export function RecallChallenge({ onResults }: Props) {
                       </span>
                     </div>
                     <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11px] text-muted-foreground">
-                      <span title="Holographic similarity — cosine overlap between the probe vector and the memory trace.">
+                      <span title="Holographic similarity: cosine overlap between the probe vector and the memory trace.">
                         <span className="text-[color:var(--signal-amber)]/80">H</span>{" "}
                         {(r.components.holographic * 100).toFixed(0)}
                       </span>
-                      <span title="Keyword overlap — fraction of query stems present in the memory.">
+                      <span title="Keyword overlap: fraction of query stems present in the memory.">
                         <span className="text-[color:var(--signal-blue)]/80">K</span>{" "}
                         {(r.components.keyword * 100).toFixed(0)}
                       </span>
-                      <span title="Trust — source-credibility score attached to the memory (0–1).">
+                      <span title="Trust: source-credibility score attached to the memory (0 to 1).">
                         <span className="text-[color:var(--signal-violet)]/80">T</span>{" "}
                         {(r.components.trust * 100).toFixed(0)}
                       </span>

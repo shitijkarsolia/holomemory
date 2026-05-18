@@ -150,10 +150,10 @@ export function RecallBlock() {
       </h2>
       <p className="mt-4 text-[16px] leading-relaxed text-muted-foreground">
         The system is pre-loaded with facts about a fictional engineering
-        team. A question doesn&rsquo;t have to mention the answer directly &mdash;
-        but it does need to share at least one keyword or named entity with the
-        stored memory. The probe builds a vector from your question and scores
-        it against every stored trace.
+        team. A question doesn&rsquo;t have to mention the answer directly,
+        but it does need to share at least one keyword or named entity with
+        the stored memory. The probe builds a vector from your question and
+        scores it against every stored trace.
       </p>
 
       {!seeded && !seedError && (
@@ -298,7 +298,7 @@ export function RecallBlock() {
                   with a {(topResult.score * 100).toFixed(0)}% combined score.
                   After weighting each component by its share of the hybrid
                   formula, the biggest contribution came from{" "}
-                  <BiggestComponent r={topResult} /> &mdash; that&rsquo;s what
+                  <BiggestComponent r={topResult} />. That&rsquo;s what
                   tipped this memory above the others.
                 </p>
               </div>

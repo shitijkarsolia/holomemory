@@ -48,7 +48,7 @@ export function TrustBlock() {
         trust: 0.2,
       });
     } catch {
-      // dedupe / non-fatal — continue
+      // dedupe / non-fatal, continue
     }
 
     await new Promise((r) => setTimeout(r, 2200));
@@ -78,7 +78,7 @@ export function TrustBlock() {
       <p className="mt-4 text-[16px] leading-relaxed text-muted-foreground">
         Every memory has a trust score between 0 and 1. When two memories
         match a query equally well, the more trusted one wins. Trust changes
-        ranking, not truth.
+        ranking, not truth itself.
       </p>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -260,7 +260,7 @@ function DataDrivenSummary({ result }: { result: QueryResponse }) {
         </p>
         <p className="mt-2 text-[14.5px] leading-relaxed text-foreground/80">
           The probe ranked {result.results.length} memories. Trust contributed{" "}
-          {Math.round(HYBRID_WEIGHTS.trust * 100)}% of the hybrid score — enough
+          {Math.round(HYBRID_WEIGHTS.trust * 100)}% of the hybrid score, enough
           to break ties when two memories match the query equally on their
           surface words.
         </p>
@@ -283,7 +283,7 @@ function DataDrivenSummary({ result }: { result: QueryResponse }) {
         What you just saw
       </p>
       <p className="mt-2 text-[14.5px] leading-relaxed text-foreground/80">
-        Both memories match the query on similar grounds — they share the
+        Both memories match the query on similar grounds. They share the
         entity &ldquo;auth service&rdquo; and the verb &ldquo;uses&rdquo;.
         Vector similarity came in at <span className="text-foreground/95">{pct(trustedHolo)}</span>{" "}
         for the PostgreSQL fact and <span className="text-foreground/95">{pct(rumorHolo)}</span>{" "}
@@ -292,9 +292,8 @@ function DataDrivenSummary({ result }: { result: QueryResponse }) {
         <span className="text-foreground/95"> {pct(rumorTrust)}</span>.
         Multiplied by the {Math.round(tWeight * 100)}% trust weight, that
         gap alone contributes <span className="text-foreground/95">{pct(trustGap)}</span>{" "}
-        to the final scores —
-        <span className="text-foreground/95"> {pct(trustedFinal)}</span> vs
-        <span className="text-foreground/95"> {pct(rumorFinal)}</span> —
+        to the final scores (<span className="text-foreground/95">{pct(trustedFinal)}</span> vs
+        <span className="text-foreground/95"> {pct(rumorFinal)}</span>),
         which is why the verified fact outranks the rumor.
       </p>
     </div>

@@ -104,7 +104,7 @@ const RANDOM_NAMES = [
 //   T     = Σᵢ factᵢ
 //   probe = unbind(unbind(T, subject), predicate) ≈ object + crosstalk noise
 // Cleanup against a symbol vocabulary picks the target object out cleanly,
-// because only the matching factᵢ contributes a coherent term — the other
+// because only the matching factᵢ contributes a coherent term. The other
 // facts produce noise vectors uncorrelated with any vocabulary entry.
 function encodeFact(s: string, p: string, o: string): Float64Array {
   return bind(symbolVector(s), bind(symbolVector(p), symbolVector(o)));
@@ -161,8 +161,8 @@ function UnbindDemoBody() {
     <div className="rounded-xl border border-border/40 bg-card/40 p-6 space-y-5">
       <SectionHeader
         n="01"
-        title="Unbind & cleanup"
-        blurb="The signature HRR operation: store a fact as a bound vector, then mathematically extract a value by 'dividing out' the role. Keyword search can re-rank stored strings; only HRR can recover a bound value as a vector."
+        title="Unbind and cleanup"
+        blurb="The headline HRR operation. Store a fact as a bound vector, then extract a value by 'dividing out' the role. Keyword search can re-rank stored strings. Only HRR can recover a bound value as a vector."
       />
 
       <div className="grid grid-cols-3 gap-2">
@@ -236,10 +236,11 @@ function UnbindDemoBody() {
             {targetIsWinner ? (
               <>
                 Cleanup picked <span className="text-foreground/90 font-medium">{winner!.symbol}</span> from the
-                vocabulary — the correct OBJECT of the (<span className="font-mono">{subject}</span>,
-                <span className="font-mono"> {predicate}</span>) fact — even though 3 other facts were
-                superposed into the same 1024-d vector. This is what unbinding enables: <em>recovering a
-                stored value as a vector</em>, not just re-ranking text. No keyword index can do this.
+                vocabulary, the correct OBJECT of the (<span className="font-mono">{subject}</span>,
+                <span className="font-mono"> {predicate}</span>) fact, even though 3 other facts were
+                superposed into the same 1024-d vector. That&rsquo;s what unbinding enables:{" "}
+                <em>recovering a stored value as a vector</em>, not just re-ranking text. No keyword
+                index can do this.
               </>
             ) : (
               <>
@@ -356,9 +357,9 @@ function CapacityDemo() {
 
       {points.length > 0 && !running && (
         <p className="text-[12.5px] leading-relaxed text-muted-foreground">
-          With 1024 dimensions, recall stays near-perfect up to ~50 pairs and degrades smoothly
-          past ~100. The trace is always the same 1024 floats &mdash; no per-fact slot, no
-          inverted index. A keyword store has constant per-fact storage cost; HRR trades capacity
+          With 1024 dimensions, recall stays near-perfect up to about 50 pairs and degrades
+          smoothly past 100. The trace is always the same 1024 floats. No per-fact slot, no
+          inverted index. A keyword store has constant per-fact storage cost. HRR trades that
           for a single fixed vector you can still do algebra on (unbind, compose, query) as a
           whole.
         </p>
@@ -437,7 +438,7 @@ function CapacityPlot({ points }: { points: { n: number; accuracy: number }[] })
 
 // Role-filler encoding so SUBJECT and OBJECT can be told apart. (Plain
 // bind(s, bind(p, o)) is fully symmetric because circular convolution is
-// commutative — that's why role distinction needs labelled role vectors.)
+// commutative, which is why role distinction needs labelled role vectors.)
 const R_SUBJ = "__R_SUBJ__";
 const R_VERB = "__R_VERB__";
 const R_OBJ = "__R_OBJ__";
@@ -598,7 +599,7 @@ function RoleColumn({
       </div>
       {expected === null && top && top.similarity < 0.25 && (
         <p className="mt-1 text-[11px] italic text-muted-foreground/70">
-          No coherent recovery &mdash; all similarities are noise-floor.
+          No coherent recovery. All similarities are at the noise floor.
         </p>
       )}
     </div>
@@ -660,7 +661,7 @@ function NoiseDemo() {
       <SectionHeader
         n="04"
         title="Graceful degradation under noise"
-        blurb="Add Gaussian noise to the encoded trace, then try to recover the OBJECT of one of the bound facts. HRR confidence drops smoothly. A keyword index has no analog — once your query loses its tokens, it returns nothing."
+        blurb="Add Gaussian noise to the encoded trace, then try to recover the OBJECT of one of the bound facts. HRR confidence drops smoothly. A keyword index has no analog: once your query loses its tokens, it returns nothing."
       />
 
       <Button onClick={run} disabled={running} className="w-full h-9 text-[13px]">
@@ -746,10 +747,10 @@ export function HrrLab() {
             Four operations a keyword index can&rsquo;t imitate
           </h2>
           <p className="max-w-2xl text-[14px] leading-relaxed text-muted-foreground">
-            The recall scorer above mixes HRR similarity with keyword overlap and trust. That makes
-            HRR look like a noisier inverted index. These four interactives instead use the
-            operations only HRR provides &mdash; binding, unbinding, superposition, and cleanup &mdash;
-            and show where the algebra earns its keep.
+            The recall scorer in the applied sandbox mixes HRR similarity with keyword overlap
+            and trust. That makes HRR look like a noisier inverted index. These four interactives
+            use only the operations HRR provides (binding, unbinding, superposition, cleanup) and
+            show where the algebra actually earns its keep.
           </p>
         </div>
 

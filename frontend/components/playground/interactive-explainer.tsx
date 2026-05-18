@@ -46,7 +46,8 @@ export function InteractiveExplainer() {
           </h2>
           <p className="mt-3 text-[15.5px] leading-relaxed text-muted-foreground">
             Three operations power holographic memory. Click each step to
-            walk through bind, superpose, and unbind with worked notation.
+            walk through bind, superpose, and unbind with worked notation
+            side by side.
           </p>
         </div>
 

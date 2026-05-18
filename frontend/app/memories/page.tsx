@@ -10,14 +10,17 @@ import { Badge } from "@/components/ui/badge";
 import { Trash, PencilSimple, MagnifyingGlass } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
+type SortMode = "recent" | "trust-asc" | "trust-desc";
+
 export default function MemoriesPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [kindFilter, setKindFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [sortMode, setSortMode] = useState<SortMode>("recent");
   const [selected, setSelected] = useState<Memory | null>(null);
 
-  const { data: memories = [], isLoading } = useQuery({
+  const { data: rawMemories = [], isLoading } = useQuery({
     queryKey: ["memories", search, kindFilter, statusFilter],
     queryFn: () => {
       const params: Record<string, string> = {};
@@ -27,6 +30,13 @@ export default function MemoriesPage() {
       return api.memories.list(params);
     },
   });
+
+  const memories = (() => {
+    if (sortMode === "recent") return rawMemories;
+    const sorted = [...rawMemories];
+    sorted.sort((a, b) => (sortMode === "trust-asc" ? a.trust - b.trust : b.trust - a.trust));
+    return sorted;
+  })();
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.memories.delete(id),
@@ -85,6 +95,16 @@ export default function MemoriesPage() {
           <option value="stale">Stale</option>
           <option value="superseded">Superseded</option>
           <option value="deleted">Deleted</option>
+        </select>
+        <select
+          value={sortMode}
+          onChange={(e) => setSortMode(e.target.value as SortMode)}
+          className="rounded-md border border-input bg-background px-3 py-2 text-sm"
+          aria-label="Sort order"
+        >
+          <option value="recent">Sort: most recent</option>
+          <option value="trust-asc">Sort: lowest trust first</option>
+          <option value="trust-desc">Sort: highest trust first</option>
         </select>
       </div>
 

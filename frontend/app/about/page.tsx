@@ -1,3 +1,25 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "About — how HRR works under the hood",
+  description:
+    "Holographic memory in detail: symbol vectors, binding by circular convolution, superposition, and the unbind-then-cleanup retrieval cycle behind HoloMem. Written for engineers who want the math, not the marketing.",
+  alternates: { canonical: "/about" },
+  openGraph: {
+    title: "About HoloMem — how HRR works under the hood",
+    description:
+      "Symbol vectors, binding by circular convolution, superposition, and the unbind-then-cleanup retrieval cycle behind HoloMem.",
+    url: "/about",
+    type: "article",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "About HoloMem — how HRR works",
+    description:
+      "Symbol vectors, binding by circular convolution, superposition, and the unbind-then-cleanup retrieval cycle.",
+  },
+};
+
 export default function AboutPage() {
   return (
     <div className="mx-auto max-w-3xl px-6 py-20 sm:py-24">

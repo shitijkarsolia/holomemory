@@ -20,9 +20,13 @@ export function TopNav() {
   return (
     <header className="fixed top-0 inset-x-0 z-40 h-16 border-b border-border bg-background/85 backdrop-blur-md">
       <div className="mx-auto flex h-full max-w-[1400px] items-center justify-between px-6">
-        <Link href="/" className="flex items-center gap-2.5">
+        <Link href="/" className="flex items-center gap-2.5" aria-label="HoloMem home">
           <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">
-            <Atom className="h-[18px] w-[18px] text-primary-foreground" weight="bold" />
+            <Atom
+              className="h-[18px] w-[18px] text-primary-foreground"
+              weight="bold"
+              aria-hidden="true"
+            />
           </div>
           <span className="font-serif text-[18px] font-semibold tracking-tight text-foreground">
             HoloMem

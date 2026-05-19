@@ -1,6 +1,6 @@
 # HoloMemory
 
-A working interactive reference for **Holographic Reduced Representations (HRR)** — a 30-year-old idea for cramming structured facts into a single fixed-size vector you can do algebra on.
+A working explainer for **Holographic Reduced Representations (HRR)**: a way to store structured information (like "Sarah owns the auth service") inside a single fixed-size vector. You add facts by binding role to value, then pull any one of them back out by asking with a key. No model, no embeddings, no API. Every demo runs the real math in the browser.
 
 The site is structured around the four HRR operations (bind, superpose, unbind, cleanup) and a small applied example showing what they enable: a memory system with role-aware retrieval and source trust.
 
@@ -8,14 +8,14 @@ The site is structured around the four HRR operations (bind, superpose, unbind, 
 
 ## What's here
 
-- **HRR Lab**: four interactives that exercise the operations only HRR provides — recover a stored value by name (`unbind` + `cleanup`), tell role-aware memories apart when keyword scoring can't, measure how many facts fit in one 1024-d vector before recall starts losing them, and watch HRR degrade smoothly under noise where a keyword index would fall off a cliff.
+- **HRR Lab**: four interactives that exercise the operations only HRR provides. Recover a stored value by name (`unbind` + `cleanup`), tell role-aware memories apart when keyword scoring can't, measure how many facts fit in one 1024-d vector before recall starts losing them, and watch HRR degrade smoothly under noise where a keyword index would fall off a cliff.
 - **Applied example**: a small memory system that uses HRR underneath, plus a stemmed keyword index for literal matches and a per-memory trust score that breaks ties when sources disagree.
-- **Playground**: hands-on sandbox for both — teach facts, query, inject noise, create contradictions, watch the memory field react.
+- **Playground**: sandbox for both. Teach facts, query, inject noise, create contradictions, watch the memory field react.
 - **Parity**: identical Python and TypeScript implementations of the algebra, verified by `scripts/parity_check.mjs` so the live JS demo matches the FastAPI backend bit-for-bit.
 
 ## What it isn't
 
-Not a competitor to RAG, vector DBs, or production embedding stacks. HRR has no semantic generalization (`editor` and `IDE` are uncorrelated symbol vectors) and capacity is finite (~50 structured facts cleanly in 1024 dimensions). It's an unusual, principled point in the design space, and this site is the smallest honest demonstration of what it can do.
+Not a competitor to RAG, vector DBs, or production embedding stacks. HRR has no semantic generalization (`editor` and `IDE` are uncorrelated symbol vectors) and capacity is finite (~50 structured facts cleanly in 1024 dimensions). It's an unusual, principled point in the design space, and this site shows what it can do.
 
 ## Test coverage
 
@@ -82,7 +82,7 @@ Retrieval constructs a probe vector from the query and ranks stored traces by si
 > [holomemory.vercel.app](https://holomemory.vercel.app) is pure client-side:
 > the FastAPI backend is *not* hosted there. Instead, `frontend/lib/hrr/` is a
 > TypeScript reimplementation of the same algebra and retrieval rules. The two
-> implementations are kept in lockstep — `scripts/dump_tokens.py` and
+> implementations are kept in lockstep: `scripts/dump_tokens.py` and
 > `scripts/parity_check.mjs` verify tokenizer parity, and `backend/tests/`
 > covers the Python side. To exercise the full stack locally, follow the steps
 > below.
@@ -165,15 +165,13 @@ node scripts/screenshot.mjs         # in another, from the repo root
 
 ## Frontend walkthrough
 
-| Section | Purpose |
-|---------|---------|
-| Playground (/) | Interactive lab: teach facts, visualize memory field, query with fuzzy recall |
-| Recall Duel | Side-by-side keyword vs holographic comparison |
-| Distortion Lab | Inject noise, create contradictions, reset: stress-test the system |
-| How It Works | Step-through explainer of bind/superpose/unbind |
-| Experiments | Run benchmarks comparing retrieval strategies |
-| Memories | Browse, filter, inspect memories |
-| About | Technical explainer for engineers |
+| Route | What's there |
+|---|---|
+| `/` | HRR explainer. Hero, the four operations, algebra, the canonical unbind demo, an applied example (encode/recall/trust), and an honest comparison with RAG, vector DBs, and keyword search. |
+| `/playground` | HRR Lab (four interactives), then the memory playground: teach facts, inspect the memory field, recall, recall duel, distortion lab. |
+| `/experiments` | Synthetic benchmark runs comparing keyword, holographic, and hybrid retrieval. |
+| `/memories` | Browse, filter, and inspect stored memories. |
+| `/about` | Technical explainer for engineers who want the details. |
 
 ## API examples
 

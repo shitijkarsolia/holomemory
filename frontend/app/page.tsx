@@ -1,5 +1,3 @@
-"use client";
-
 import { HeroSection } from "@/components/explainer/hero";
 import { WhatSection } from "@/components/explainer/what-section";
 import { AlgebraSection } from "@/components/explainer/algebra-section";

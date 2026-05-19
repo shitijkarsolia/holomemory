@@ -111,10 +111,12 @@ export function MemoryField({ highlightedIds = [], lastEncodedId }: Props) {
             if (!pos) return null;
             const isHighlighted = highlightSet.has(mem.id);
             const isNew = mem.id === lastEncodedId;
-            const isLowTrust = mem.trust < 0.3;
+            const trust = typeof mem.trust === "number" && Number.isFinite(mem.trust) ? mem.trust : 0.5;
+            const isLowTrust = trust < 0.3;
             const isContradiction = mem.tags.includes("contradiction");
             const isHovered = hoveredId === mem.id;
-            const radius = 4 + mem.trust * 6;
+            const radius = 4 + trust * 6;
+            const baseFillOpacity = 0.3 + trust * 0.4;
 
             return (
               <motion.g
@@ -144,11 +146,7 @@ export function MemoryField({ highlightedIds = [], lastEncodedId }: Props) {
                         ? "oklch(0.4 0.05 160)"
                         : "oklch(0.65 0.17 160)"
                   }
-                  fillOpacity={
-                    isHovered || isHighlighted
-                      ? 0.95
-                      : 0.3 + mem.trust * 0.4
-                  }
+                  fillOpacity={isHovered || isHighlighted ? 0.95 : baseFillOpacity}
                   filter={
                     isHighlighted || isHovered
                       ? "url(#glow-strong)"
@@ -156,10 +154,11 @@ export function MemoryField({ highlightedIds = [], lastEncodedId }: Props) {
                         ? "url(#glow)"
                         : undefined
                   }
+                  initial={{ r: radius, fillOpacity: baseFillOpacity }}
                   animate={
                     isHighlighted || isHovered
                       ? { r: radius * 1.4, fillOpacity: 0.95 }
-                      : { r: radius, fillOpacity: 0.3 + mem.trust * 0.4 }
+                      : { r: radius, fillOpacity: baseFillOpacity }
                   }
                   transition={{ type: "spring", stiffness: 300, damping: 25 }}
                 />

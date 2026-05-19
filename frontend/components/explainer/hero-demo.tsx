@@ -25,6 +25,17 @@ function oklch(color: SignalColor, alpha = 1): string {
     : `oklch(${color.l} ${color.c} ${color.h} / ${alpha})`;
 }
 
+// NOTE: These strips are a stylized visualization, NOT computed from the live
+// HRR algebra in `lib/hrr/hrr.ts`. Real bind() output is near-Gaussian noise
+// and visually indistinguishable cell-to-cell, which defeats the figure's
+// pedagogical purpose. A hash of (role, value) gives deterministic, visually
+// distinct stripes per fact while preserving the "deterministic per input"
+// property HRR has. If you want real HRR in the strips, replace
+// `bindingAmplitudes` with:
+//   const v = bind(symbolVector(`__ROLE_${role.toUpperCase()}__`),
+//                  symbolVector(value.toLowerCase()));
+//   then downsample 1024 -> n with abs() + window-average and perceptually
+//   rescale to [0.15, 0.95]. Visual impact will drop noticeably.
 function hash(seed: string, i: number): number {
   let h = 2166136261 ^ (i * 16777619);
   for (let j = 0; j < seed.length; j++) {

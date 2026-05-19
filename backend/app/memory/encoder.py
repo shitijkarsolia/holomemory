@@ -1,9 +1,22 @@
 """Encodes structured memories into HRR trace vectors."""
 
+import Stemmer
 import numpy as np
 
 from app.config import HRR_DIMENSION
 from app.memory.hrr import bind, superpose, symbol_vector
+
+_STEMMER = Stemmer.Stemmer("english")
+_STEM_CACHE: dict[str, str] = {}
+
+
+def _stem(token: str) -> str:
+    cached = _STEM_CACHE.get(token)
+    if cached is not None:
+        return cached
+    stemmed = _STEMMER.stemWord(token)
+    _STEM_CACHE[token] = stemmed
+    return stemmed
 
 
 def encode_memory(
@@ -86,21 +99,35 @@ def build_query_probe(
     return superpose(probes)
 
 
+STOPWORDS = {
+    "the", "a", "an", "is", "are", "was", "were", "be", "been", "being",
+    "have", "has", "had", "do", "does", "did", "will", "would", "could",
+    "should", "may", "might", "shall", "can", "to", "of", "in", "for",
+    "on", "with", "at", "by", "from", "as", "into", "through", "during",
+    "before", "after", "above", "below", "between", "and", "but", "or",
+    "nor", "not", "so", "yet", "both", "either", "neither", "each",
+    "every", "all", "any", "few", "more", "most", "other", "some",
+    "such", "no", "only", "own", "same", "than", "too", "very",
+    "just", "because", "if", "when", "where", "how", "what", "which",
+    "who", "whom", "this", "that", "these", "those", "it", "its",
+}
+
+
 def _tokenize(text: str) -> list[str]:
-    """Simple whitespace + punctuation tokenizer, lowercased, stopwords removed."""
+    """Lowercase, split on non-alphanumerics, drop stopwords, stem with Snowball English."""
     import re
 
-    stopwords = {
-        "the", "a", "an", "is", "are", "was", "were", "be", "been", "being",
-        "have", "has", "had", "do", "does", "did", "will", "would", "could",
-        "should", "may", "might", "shall", "can", "to", "of", "in", "for",
-        "on", "with", "at", "by", "from", "as", "into", "through", "during",
-        "before", "after", "above", "below", "between", "and", "but", "or",
-        "nor", "not", "so", "yet", "both", "either", "neither", "each",
-        "every", "all", "any", "few", "more", "most", "other", "some",
-        "such", "no", "only", "own", "same", "than", "too", "very",
-        "just", "because", "if", "when", "where", "how", "what", "which",
-        "who", "whom", "this", "that", "these", "those", "it", "its",
-    }
     words = re.findall(r"[a-z0-9]+", text.lower())
-    return [w for w in words if w not in stopwords and len(w) > 1]
+    return [_stem(w) for w in words if w not in STOPWORDS and len(w) > 1]
+
+
+def _tokenize_with_surface(text: str) -> list[tuple[str, str]]:
+    """Same as `_tokenize` but also returns the surface form alongside each stem.
+
+    Used by retrieval code that wants to show the original word in `why` strings
+    while still matching on stems internally.
+    """
+    import re
+
+    words = re.findall(r"[a-z0-9]+", text.lower())
+    return [(_stem(w), w) for w in words if w not in STOPWORDS and len(w) > 1]

@@ -4,6 +4,16 @@ import { cosineSimilarity } from "./hrr";
 import { keywordSearch } from "./keyword";
 import { MemoryStore } from "./store";
 
+// Weights for the hybrid scoring formula. Kept in one place so the explainer
+// UI (BiggestComponent) can use identical weights when deciding which
+// component drove a result. Must stay in sync with backend/app/memory/retrieval.py.
+export const HYBRID_WEIGHTS = {
+  holographic: 0.4,
+  keyword: 0.3,
+  trust: 0.15,
+  entity: 0.15,
+} as const;
+
 export function queryMemories(
   store: MemoryStore,
   query: string,
@@ -50,11 +60,10 @@ export function queryMemories(
     const keyword = kw ? kw.score : 0;
     const trust = memory.trust;
 
-    const entitySet = new Set([
-      ...(memory.entities || []).map((e) => e.toLowerCase()),
-      ...(memory.subject ? [memory.subject.toLowerCase()] : []),
-      ...(memory.object ? memory.object.toLowerCase().split(/\s+/) : []),
-    ]);
+    const entitySet = new Set<string>();
+    for (const e of memory.entities || []) for (const t of tokenize(e)) entitySet.add(t);
+    if (memory.subject) for (const t of tokenize(memory.subject)) entitySet.add(t);
+    if (memory.object) for (const t of tokenize(memory.object)) entitySet.add(t);
     const entityMatches = queryTokens.filter((t) => entitySet.has(t)).length;
     const entityOverlap = queryTokens.length > 0 ? entityMatches / queryTokens.length : 0;
 
@@ -64,7 +73,11 @@ export function queryMemories(
     } else if (mode === "keyword") {
       final = keyword;
     } else {
-      final = 0.4 * holographic + 0.3 * keyword + 0.15 * trust + 0.15 * entityOverlap;
+      final =
+        HYBRID_WEIGHTS.holographic * holographic +
+        HYBRID_WEIGHTS.keyword * keyword +
+        HYBRID_WEIGHTS.trust * trust +
+        HYBRID_WEIGHTS.entity * entityOverlap;
     }
 
     if (final > 0.01) {

@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { api } from "@/lib/api";
+import { makeApi } from "@/lib/api";
 import { useQueryClient } from "@tanstack/react-query";
 import type { QueryResponse, RetrievalResult } from "@/lib/types";
 import { DEMO_FACTS } from "@/lib/demo-data";
+import { HYBRID_WEIGHTS } from "@/lib/hrr/retrieval";
 
 const EXAMPLE_QUERIES = [
   "Who should I ask about login?",
@@ -83,6 +84,7 @@ export function RecallBlock() {
   const [queryError, setQueryError] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const seedingRef = useRef(false);
+  const api = useMemo(() => makeApi(), []);
 
   useEffect(() => {
     if (seedingRef.current) return;
@@ -148,9 +150,10 @@ export function RecallBlock() {
       </h2>
       <p className="mt-4 text-[16px] leading-relaxed text-muted-foreground">
         The system is pre-loaded with facts about a fictional engineering
-        team. Ask anything related, even with different words. The probe
-        builds a vector from your question and scores it against every stored
-        trace.
+        team. A question doesn&rsquo;t have to mention the answer directly,
+        but it does need to share at least one keyword or named entity with
+        the stored memory. The probe builds a vector from your question and
+        scores it against every stored trace.
       </p>
 
       {!seeded && !seedError && (
@@ -293,10 +296,10 @@ export function RecallBlock() {
                     &ldquo;{topResult.memory.text}&rdquo;
                   </span>{" "}
                   with a {(topResult.score * 100).toFixed(0)}% combined score.
-                  The biggest contribution came from{" "}
-                  <BiggestComponent r={topResult} />, which is why the system
-                  could find this memory even though your question used
-                  different words.
+                  After weighting each component by its share of the hybrid
+                  formula, the biggest contribution came from{" "}
+                  <BiggestComponent r={topResult} />. That&rsquo;s what
+                  tipped this memory above the others.
                 </p>
               </div>
             )}
@@ -401,29 +404,38 @@ function ResultRow({ r, index }: { r: RetrievalResult; index: number }) {
 }
 
 function BiggestComponent({ r }: { r: RetrievalResult }) {
+  // Report the largest WEIGHTED contribution, not the largest unweighted
+  // component value. Without this, trust (always ~0.85-0.95 in the seed)
+  // wins the argmax for every memory and the copy is tautological.
   const entries = [
     {
       label: "holographic similarity (vector overlap)",
       value: r.components.holographic,
+      weight: HYBRID_WEIGHTS.holographic,
       color: "var(--signal-amber)",
     },
     {
       label: "shared keywords",
       value: r.components.keyword,
+      weight: HYBRID_WEIGHTS.keyword,
       color: "var(--signal-blue)",
     },
     {
       label: "trust in the source",
       value: r.components.trust,
+      weight: HYBRID_WEIGHTS.trust,
       color: "var(--signal-violet)",
     },
     {
       label: "shared entities",
       value: r.components.entity_overlap,
+      weight: HYBRID_WEIGHTS.entity,
       color: "oklch(0.62 0.07 155)",
     },
   ];
-  const top = entries.reduce((a, b) => (b.value > a.value ? b : a));
+  const top = entries.reduce((a, b) =>
+    b.value * b.weight > a.value * a.weight ? b : a,
+  );
   return (
     <span style={{ color: top.color }} className="font-medium">
       {top.label}

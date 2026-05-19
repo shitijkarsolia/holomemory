@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { api } from "@/lib/api";
-import type { QueryResponse } from "@/lib/types";
+import { makeApi } from "@/lib/api";
+import { HYBRID_WEIGHTS } from "@/lib/hrr/retrieval";
+import type { QueryResponse, RetrievalResult } from "@/lib/types";
+
+const TRUST_PROBE = "What database does the auth service use?";
 
 export function TrustBlock() {
   const [phase, setPhase] = useState<
@@ -11,11 +14,28 @@ export function TrustBlock() {
   >("idle");
   const [result, setResult] = useState<QueryResponse | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const api = useMemo(() => makeApi(), []);
 
   const handleRun = async () => {
     setPhase("injecting");
     setErrorMsg(null);
+
+    // Start from an empty store and seed exactly the two memories the
+    // narrative compares. Avoids the earlier confound where "Sarah owns the
+    // auth service" (loaded by the recall block) outranked both candidates.
     try {
+      await api.reset();
+      await api.memories.create({
+        text: "The auth service uses PostgreSQL for session storage.",
+        kind: "fact",
+        subject: "auth service",
+        predicate: "uses",
+        object: "PostgreSQL",
+        entities: ["auth service", "PostgreSQL"],
+        tags: ["tech-stack"],
+        source: "user",
+        trust: 0.85,
+      });
       await api.memories.create({
         text: "An unverified source claims the auth service uses MongoDB.",
         kind: "note",
@@ -28,7 +48,7 @@ export function TrustBlock() {
         trust: 0.2,
       });
     } catch {
-      // may already exist; continue
+      // dedupe / non-fatal, continue
     }
 
     await new Promise((r) => setTimeout(r, 2200));
@@ -36,7 +56,7 @@ export function TrustBlock() {
 
     try {
       const [res] = await Promise.all([
-        api.query("What database does the auth service use?", "hybrid", 5),
+        api.query(TRUST_PROBE, "hybrid", 5),
         new Promise((r) => setTimeout(r, 1800)),
       ]);
       setResult(res);
@@ -58,7 +78,7 @@ export function TrustBlock() {
       <p className="mt-4 text-[16px] leading-relaxed text-muted-foreground">
         Every memory has a trust score between 0 and 1. When two memories
         match a query equally well, the more trusted one wins. Trust changes
-        ranking, not truth.
+        ranking, not truth itself.
       </p>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -184,20 +204,9 @@ export function TrustBlock() {
               );
             })}
 
-            <div className="rounded-md border border-border/50 bg-card/30 p-5">
-              <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
-                What you just saw
-              </p>
-              <p className="mt-2 text-[14.5px] leading-relaxed text-foreground/80">
-                Both memories matched the query well on vector similarity:
-                they share the word &ldquo;database&rdquo; and the entity
-                &ldquo;auth service&rdquo;. The high-trust PostgreSQL fact
-                still ranks above the low-trust MongoDB claim, because the
-                final score blends in <span className="text-foreground/95">15% trust</span>{" "}
-                weighting from the hybrid formula. Without that, the system
-                would have to treat both claims as equally believable.
-              </p>
-            </div>
+            <DataDrivenSummary result={result} />
+
+
 
             <button
               onClick={() => {
@@ -222,6 +231,71 @@ function Bar({ value, color }: { value: number; color: string }) {
         className="h-full rounded-full"
         style={{ width: `${Math.min(100, Math.max(0, value))}%`, background: color }}
       />
+    </div>
+  );
+}
+
+function findResult(
+  results: RetrievalResult[],
+  predicate: (r: RetrievalResult) => boolean,
+): RetrievalResult | undefined {
+  return results.find(predicate);
+}
+
+function pct(n: number) {
+  return `${(n * 100).toFixed(0)}%`;
+}
+
+function DataDrivenSummary({ result }: { result: QueryResponse }) {
+  const trusted = findResult(result.results, (r) =>
+    /postgres/i.test(r.memory.text),
+  );
+  const rumor = findResult(result.results, (r) => /mongo/i.test(r.memory.text));
+
+  if (!trusted || !rumor) {
+    return (
+      <div className="rounded-md border border-border/50 bg-card/30 p-5">
+        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+          What you just saw
+        </p>
+        <p className="mt-2 text-[14.5px] leading-relaxed text-foreground/80">
+          The probe ranked {result.results.length} memories. Trust contributed{" "}
+          {Math.round(HYBRID_WEIGHTS.trust * 100)}% of the hybrid score, enough
+          to break ties when two memories match the query equally on their
+          surface words.
+        </p>
+      </div>
+    );
+  }
+
+  const trustedHolo = trusted.components.holographic;
+  const rumorHolo = rumor.components.holographic;
+  const trustedTrust = trusted.components.trust;
+  const rumorTrust = rumor.components.trust;
+  const trustedFinal = trusted.score;
+  const rumorFinal = rumor.score;
+  const tWeight = HYBRID_WEIGHTS.trust;
+  const trustGap = (trustedTrust - rumorTrust) * tWeight;
+
+  return (
+    <div className="rounded-md border border-border/50 bg-card/30 p-5">
+      <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+        What you just saw
+      </p>
+      <p className="mt-2 text-[14.5px] leading-relaxed text-foreground/80">
+        Both memories match the query on similar grounds. They share the
+        entity &ldquo;auth service&rdquo; and the verb &ldquo;uses&rdquo;.
+        Vector similarity came in at <span className="text-foreground/95">{pct(trustedHolo)}</span>{" "}
+        for the PostgreSQL fact and <span className="text-foreground/95">{pct(rumorHolo)}</span>{" "}
+        for the MongoDB rumor. What separates them is trust:
+        <span className="text-foreground/95"> {pct(trustedTrust)}</span> vs
+        <span className="text-foreground/95"> {pct(rumorTrust)}</span>.
+        Multiplied by the {Math.round(tWeight * 100)}% trust weight, that
+        gap alone contributes <span className="text-foreground/95">{pct(trustGap)}</span>{" "}
+        to the final scores (<span className="text-foreground/95">{pct(trustedFinal)}</span> vs
+        <span className="text-foreground/95"> {pct(rumorFinal)}</span>),
+        which is why the verified fact outranks the rumor.
+      </p>
     </div>
   );
 }

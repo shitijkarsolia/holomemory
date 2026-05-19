@@ -16,8 +16,19 @@ const EXAMPLE_QUERIES = [
   "What does Maya prefer?",
   "What stack does Atlas use?",
   "What changed about Maya's editor?",
-  "Which memory seems least trustworthy?",
+  "Where does Atlas store its memories?",
 ];
+
+function scoreTooltip(mode: "hybrid" | "holographic" | "keyword", score: number): string {
+  const pct = (score * 100).toFixed(1) + "%";
+  if (mode === "hybrid") {
+    return `Hybrid score (${pct}) = 0.4·H + 0.3·K + 0.15·T + 0.15·E, blended from this card's component values.`;
+  }
+  if (mode === "holographic") {
+    return `Holographic score (${pct}) is the raw vector cosine similarity. Trust is not factored in for this mode.`;
+  }
+  return `Keyword score (${pct}) is the fraction of query stems present in this memory. Trust is not factored in for this mode.`;
+}
 
 interface Props {
   onResults?: (ids: string[]) => void;
@@ -94,6 +105,14 @@ export function RecallChallenge({ onResults }: Props) {
             ))}
           </div>
         </div>
+        <p className="mt-2 text-[11.5px] leading-snug text-muted-foreground/80">
+          {mode === "hybrid" &&
+            "Weighted blend: 40% vector, 30% keywords, 15% trust, 15% entities."}
+          {mode === "holographic" &&
+            "Pure vector cosine similarity. Trust is ignored, so stale or low-trust memories can win on raw overlap."}
+          {mode === "keyword" &&
+            "Fraction of query stems present in the memory. Trust is ignored."}
+        </p>
       </div>
 
       <Button
@@ -145,24 +164,52 @@ export function RecallChallenge({ onResults }: Props) {
                       <p className="text-[13px] leading-relaxed text-foreground/90">
                         {r.memory.text}
                       </p>
-                      <span className="shrink-0 font-mono text-[13px] font-semibold text-[color:var(--signal-amber)]">
+                      <span
+                        title={scoreTooltip(mode, r.score)}
+                        className="shrink-0 cursor-help font-mono text-[13px] font-semibold text-[color:var(--signal-amber)]"
+                      >
                         {(r.score * 100).toFixed(0)}%
                       </span>
                     </div>
                     <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11px] text-muted-foreground">
-                      <span>
+                      <span title="Holographic similarity: cosine overlap between the probe vector and the memory trace.">
                         <span className="text-[color:var(--signal-amber)]/80">H</span>{" "}
                         {(r.components.holographic * 100).toFixed(0)}
                       </span>
-                      <span>
+                      <span title="Keyword overlap: fraction of query stems present in the memory.">
                         <span className="text-[color:var(--signal-blue)]/80">K</span>{" "}
                         {(r.components.keyword * 100).toFixed(0)}
                       </span>
-                      <span>
+                      <span title="Trust: source-credibility score attached to the memory (0 to 1).">
                         <span className="text-[color:var(--signal-violet)]/80">T</span>{" "}
                         {(r.components.trust * 100).toFixed(0)}
                       </span>
-                      {r.memory.trust < 0.3 && (
+                      {(r.memory.tags || []).includes("outdated") && (
+                        <Badge
+                          variant="outline"
+                          className="border-[color:var(--signal-amber)]/50 text-[10px] text-[color:var(--signal-amber)]"
+                        >
+                          outdated
+                        </Badge>
+                      )}
+                      {(r.memory.tags || []).includes("dubious") && (
+                        <Badge
+                          variant="outline"
+                          className="border-[color:var(--signal-amber)]/50 text-[10px] text-[color:var(--signal-amber)]"
+                        >
+                          dubious
+                        </Badge>
+                      )}
+                      {(r.memory.status === "stale" ||
+                        r.memory.status === "superseded") && (
+                        <Badge
+                          variant="outline"
+                          className="border-[color:var(--signal-amber)]/50 text-[10px] text-[color:var(--signal-amber)]"
+                        >
+                          {r.memory.status}
+                        </Badge>
+                      )}
+                      {r.memory.trust < 0.4 && (
                         <Badge
                           variant="outline"
                           className="border-destructive/40 text-[10px] text-destructive"

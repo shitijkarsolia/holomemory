@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { api } from "@/lib/api";
+import { makeApi } from "@/lib/api";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Memory } from "@/lib/types";
 
@@ -49,6 +49,17 @@ function oklch(c: SignalColor, alpha = 1): string {
     : `oklch(${c.l} ${c.c} ${c.h} / ${alpha})`;
 }
 
+// NOTE: These strips are a stylized visualization, NOT computed from the live
+// HRR algebra in `lib/hrr/hrr.ts`. Real bind() output is near-Gaussian noise
+// and visually indistinguishable cell-to-cell, which defeats the figure's
+// pedagogical purpose. A hash of (role, value) gives deterministic, visually
+// distinct stripes per fact while preserving the "deterministic per input"
+// property HRR has. If you want real HRR in the strips, replace
+// `bindingAmplitudes` with:
+//   const v = bind(symbolVector(`__ROLE_${role.toUpperCase()}__`),
+//                  symbolVector(value.toLowerCase()));
+//   then downsample 1024 -> n with abs() + window-average and perceptually
+//   rescale to [0.15, 0.95]. Visual impact will drop noticeably.
 function hash(seed: string, i: number): number {
   let h = 2166136261 ^ (i * 16777619);
   for (let j = 0; j < seed.length; j++) {
@@ -100,6 +111,7 @@ export function EncodeBlock() {
   const [encoded, setEncoded] = useState<Memory | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const queryClient = useQueryClient();
+  const api = useMemo(() => makeApi(), []);
 
   const busy = phase === "decomposing" || phase === "binding";
 
@@ -175,9 +187,8 @@ export function EncodeBlock() {
         Encode a fact
       </h2>
       <p className="mt-4 text-[16px] leading-relaxed text-muted-foreground">
-        Pick a fact. You&rsquo;ll see it split into a role-value triple, watch
-        the three pieces mix into colored vectors, and finally see them stack
-        into one trace.
+        Pick a fact. You&rsquo;ll see it split into a role-value triple, the
+        three pieces mix into colored vectors, then stack into one trace.
       </p>
 
       <div className="mt-6 grid gap-2 sm:grid-cols-3">
@@ -389,8 +400,9 @@ export function EncodeBlock() {
                   <span aria-hidden className="mt-[10px] inline-block h-px w-2.5 shrink-0 bg-[color:var(--signal-violet)]/60" />
                   <span>
                     A query like &ldquo;who handles login?&rdquo; doesn&rsquo;t
-                    have to match these exact words. Try the recall block
-                    below.
+                    have to mention the answer directly. It does need to share
+                    at least one keyword or named entity with the stored
+                    memory. Try the recall block below.
                   </span>
                 </li>
               </ul>

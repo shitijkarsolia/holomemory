@@ -1,17 +1,8 @@
 """Tests for API endpoints."""
 
-import pytest
 from fastapi.testclient import TestClient
 
-from app.db import Base, engine
 from app.main import app
-
-
-@pytest.fixture(autouse=True)
-def setup_db():
-    Base.metadata.create_all(bind=engine)
-    yield
-    Base.metadata.drop_all(bind=engine)
 
 
 client = TestClient(app)

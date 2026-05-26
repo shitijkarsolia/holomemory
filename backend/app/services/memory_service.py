@@ -63,6 +63,25 @@ def update_memory(db: Session, memory_id: str, data: MemoryUpdate) -> Memory | N
     update_data = data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(memory, field, value)
+
+    # If the user changed `text` without supplying new subject/predicate/
+    # object, the stored SPO fields and the re-encoded vector would
+    # otherwise disagree (vector reflects new text, SPO reflects old).
+    # Re-extract any SPO field that wasn't explicitly provided in the patch.
+    if "text" in update_data:
+        derived = _extract_spo(MemoryCreate(
+            text=memory.text,
+            subject=memory.subject if "subject" in update_data else None,
+            predicate=memory.predicate if "predicate" in update_data else None,
+            object=memory.object if "object" in update_data else None,
+        ))
+        if "subject" not in update_data:
+            memory.subject = derived[0]
+        if "predicate" not in update_data:
+            memory.predicate = derived[1]
+        if "object" not in update_data:
+            memory.object = derived[2]
+
     memory.updated_at = datetime.now(timezone.utc)
 
     trace = encode_memory(
@@ -78,6 +97,10 @@ def update_memory(db: Session, memory_id: str, data: MemoryUpdate) -> Memory | N
         vec_record.vector = trace.tobytes()
     else:
         db.add(MemoryVector(memory_id=memory_id, vector=trace.tobytes(), dimension=len(trace)))
+
+    # Register any new symbols introduced by the update so the cleanup
+    # vocabulary stays current with the stored vector.
+    _register_symbols(db, memory)
 
     db.commit()
     db.refresh(memory)
@@ -95,8 +118,17 @@ def delete_memory(db: Session, memory_id: str) -> Memory | None:
     return memory
 
 
-def get_memory(db: Session, memory_id: str) -> Memory | None:
-    return db.query(Memory).filter(Memory.id == memory_id).first()
+def get_memory(db: Session, memory_id: str, include_deleted: bool = False) -> Memory | None:
+    """Fetch a memory by id.
+
+    By default, soft-deleted memories (status == 'deleted') are NOT returned —
+    callers must opt in via include_deleted=True. This prevents the contradiction
+    endpoint and GET /memories/{id} from operating on tombstoned rows.
+    """
+    query = db.query(Memory).filter(Memory.id == memory_id)
+    if not include_deleted:
+        query = query.filter(Memory.status != "deleted")
+    return query.first()
 
 
 def list_memories(
@@ -118,6 +150,10 @@ def list_memories(
         query = query.filter(Memory.kind == kind)
     if status:
         query = query.filter(Memory.status == status)
+    else:
+        # Default: hide soft-deleted memories. Callers that genuinely
+        # want deleted rows must pass status='deleted' explicitly.
+        query = query.filter(Memory.status != "deleted")
     if min_trust is not None:
         query = query.filter(Memory.trust >= min_trust)
 

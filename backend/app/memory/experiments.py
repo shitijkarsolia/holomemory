@@ -1,5 +1,6 @@
 """Experiment runner: benchmarks retrieval modes against synthetic queries."""
 
+import re
 import time
 
 from sqlalchemy.orm import Session
@@ -43,9 +44,11 @@ def run_experiment(db: Session, num_queries: int = 10) -> ExperimentResponse:
     hybrid_metrics = _run_mode(db, queries, memories, "hybrid")
 
     notes = [
-        "Hybrid combines holographic (40%), keyword (30%), trust (15%), entity overlap (15%).",
+        "Hybrid combines holographic (45%), keyword (35%), trust (10%), entity overlap (10%).",
+        "Trust is centered at 0.5 in the score so neutral trust doesn't add a constant boost.",
         "Holographic retrieval uses algebraic probe vectors — approximate, not exact.",
         "Keyword baseline uses simple token overlap scoring.",
+        "Recall@k is measured by word-boundary match on the result's text/entities/tags/subject.",
         f"Tested against {len(memories)} active memories with {len(queries)} queries.",
     ]
 
@@ -77,6 +80,11 @@ def _run_mode(
         total_latency += elapsed
 
         expected = q["expected_entity"].lower()
+        # Match on word boundaries — substring matching ('ui' in 'building',
+        # 'user' in 'username') previously inflated recall@k by counting
+        # spurious overlaps as hits.
+        expected_pattern = re.compile(r"\b" + re.escape(expected) + r"\b")
+
         result_texts = []
         for r in response.results:
             combined = (
@@ -87,11 +95,14 @@ def _run_mode(
             )
             result_texts.append(combined)
 
-        if result_texts and expected in result_texts[0]:
+        def _hit(text: str) -> bool:
+            return expected_pattern.search(text) is not None
+
+        if result_texts and _hit(result_texts[0]):
             hits_at_1 += 1
-        if any(expected in t for t in result_texts[:3]):
+        if any(_hit(t) for t in result_texts[:3]):
             hits_at_3 += 1
-        if any(expected in t for t in result_texts[:5]):
+        if any(_hit(t) for t in result_texts[:5]):
             hits_at_5 += 1
 
     n = len(queries)

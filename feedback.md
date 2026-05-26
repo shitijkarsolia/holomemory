@@ -34,9 +34,9 @@ the reviewer has 30–90 seconds.
 
 These are visible the first time a reviewer clicks past the homepage.
 
-**1. `/memories` and `/experiments` are stylistic strangers.** Both are reachable
-from `README.md` and have proper `<Metadata>` blocks, but neither matches the
-editorial system the homepage establishes.
+**1. ✅ `/memories` and `/experiments` are stylistic strangers.** *Done — both
+routes deleted on `ui/cleanup-and-fft-interactive`. Sitemap, README route
+table, and demo-script all updated. The styling-fix path is moot now.*
 
 - `app/memories/page.tsx` lines 161–164 and 275 use raw Tailwind:
   `text-emerald-600`, `text-amber-600`, `text-zinc-500`, `text-red-500/600`,
@@ -57,9 +57,7 @@ editorial system the homepage establishes.
 Effort: **M**. This is mostly a search-replace + a typography pass on two
 files.
 
-**2. Orphan routes.** `TopNav` exposes `/`, `/playground`, `/about`. Nothing in
-the UI links to `/memories` or `/experiments` — typing the URL is the only way
-in. The `CtaSection` only links to `/playground` and `/about`. Either:
+**2. ✅ Orphan routes.** *Done — resolved by removing the routes outright.*
 
 - Add `Memories` and `Experiments` to `TopNav` (with a mobile hamburger — see
   #6), or
@@ -70,44 +68,28 @@ The current state — fully built, fully orphaned, fully off-brand — is the
 worst of both. I'd add them to the nav and fix the styling. Effort: **S** for
 the nav change, **M** when combined with #1.
 
-**3. `MemoryField` uses a different color story than the rest of the app.**
-`components/playground/memory-field.tsx` hardcodes `oklch(0.65 0.17 160)`
-(green) for memory nodes and edges, `oklch(0.4 0.05 160)` for low-trust,
-`oklch(0.6 0.2 25)` for contradiction. The rest of the app says memories are
-amber, low-trust is muted, contradictions are red. The graph viz is the
-most-shared visual on the playground page; it should anchor the palette, not
-contradict it.
+**3. ✅ `MemoryField` uses a different color story than the rest of the app.**
+*Done — memory nodes use `var(--signal-amber)`, low-trust uses
+`var(--muted-foreground)`, contradictions use `var(--signal-red)`, edges and
+the new-node pulse ring use `var(--signal-amber)`. Legend tracks the new
+colors. Container background switched to the warm `oklch(0.09 0.012 75)`.*
 
 Map: memory → `var(--signal-amber)`, low-trust → `var(--muted-foreground)` at
 low opacity, contradiction → `var(--signal-red)`, edges → `var(--signal-amber)`
 at low opacity. The legend already exists, just needs to track the new colors.
 Effort: **S**.
 
-**4. There is no footer.** A portfolio site without a "view source" link, a
-"built by", and a copyright is missing the smallest possible "I made this"
-signal. Add a minimal footer to `app/layout.tsx` after `<main>`: project name,
-link to GitHub, link to author's site (already in `lib/seo.ts` as
-`SITE_AUTHOR`), and a one-line "client-side TS engine + FastAPI backend"
-technical credit. Effort: **S**.
+**4. ✅ There is no footer.** *Done — `components/site-footer.tsx` shipped:
+project name, dynamic `© <year> Shitij Karsolia`, `Source` link to the GitHub
+repo, author-name link. Mounted in `app/layout.tsx` after `<main>`. Technical
+credit was intentionally omitted per the author's preference.*
 
-**5. `/about` is a wall of text adjacent to the most visual page on the site.**
-It explains the same operations as `AlgebraSection`, `EncodeBlock`, and
-`UnbindSection` on the homepage, in plainer prose, with no visualizations. Two
-specific issues:
-
-- Its "Tradeoffs vs vector DB / RAG" table partly overlaps with the homepage
-  `ComparisonSection`, but with different rows and columns. A reviewer
-  comparing the two will notice. Pick one; either remove the about-page table
-  or have it cite the homepage table verbatim.
-- The "What is holographic memory?" paragraph slides into more abstract framing
-  ("brain-inspired", "approximate, content-addressable lookup") than the rest
-  of the site. The homepage `WhatSection` is more concrete. Bring this
-  paragraph in line.
-
-If you want this page to earn the `/about` URL, give it one thing the homepage
-doesn't have: real notation, real code snippets from `lib/hrr/hrr.ts`, or a
-small interactive that exposes the FFT under the binding. Otherwise, it's
-"click here to read the homepage again." Effort: **M**.
+**5. ✅ `/about` is a wall of text adjacent to the most visual page on the
+site.** *Done — page rebuilt around `components/explainer/fft-binding.tsx`,
+a live interactive that runs the real `fft → complex multiply → ifft` pipeline
+on every keystroke. The "What is holographic memory?" prose, the four "HRR
+operations" cards, and the duplicate comparison table were dropped. Retrieval
+modes (now with the parity-check callout) and tech stack stay.*
 
 ---
 
@@ -182,19 +164,15 @@ purpose. Same for `NoiseDemo` (9 × 5). The sweeps already chunk with
 search-as-you-type combobox using `dropdown-menu.tsx` or `select.tsx` so any
 memory in the field can be contradicted. Effort: **S**.
 
-**15. `/experiments` has hard-coded `num_queries=10`.** Add a small slider or
-numeric input (5–50) so the reviewer can run a cheap quick check or a more
-representative sweep. Also add a "winner" callout: `recharts` chart + an
-above-the-chart banner that says "Hybrid won Recall@5: 0.92 (vs Holographic
-0.78, Keyword 0.61)". Numbers without an interpretation ask the reader to do
-the interpretation. Effort: **S**.
+**15. ⊘ `/experiments` has hard-coded `num_queries=10`.** *Stale — the
+`/experiments` route was deleted on `ui/cleanup-and-fft-interactive`.*
 
-**16. `/experiments` and `/memories` lack a stats sidebar.** `api.stats()` is
-implemented and returns counts, but no UI consumes it. Add a 3-tile strip
-(`MetricCard` already exists at `components/metric-card.tsx` — currently
-unused) on `/memories` showing total / active / by-source breakdown, and on
-`/experiments` showing memories present at run time. Wires up an unused
-component and orients first-time visitors. Effort: **S**.
+**16. ↻ Stats sidebar (re-targeted).** *Original targets (`/memories`,
+`/experiments`) are gone. The idea still applies if you want a small live
+counter on `/playground` — `api.stats()` is implemented and `MetricCard`
+exists at `components/metric-card.tsx` (currently unused). One option for the
+playground hero: a 3-tile strip showing total / active / by-source counts
+that updates after teach / noise / contradict actions.* Effort: **S**.
 
 **17. `TeachPanel` form polish.**
 - The `<select>` for source is native; the rest of the playground uses native
@@ -235,15 +213,8 @@ memory objects in a UI component (lines 25–87) is a smell. Move to
 `lib/demo-data.ts` next to `DEMO_FACTS`. The hero already imports `api`; the
 seed file already exists. Effort: **XS**.
 
-**20. `/memories` editor.** The header copy says "Browse, filter, and **manage**
-memories." The inspector only exposes Mark Stale and Delete. Real management
-would let the user edit `text`, `trust`, `tags`, `subject/predicate/object`,
-and `status` (stale ↔ active). The API supports `PATCH /memories/:id` with a
-`MemoryUpdate` partial — only `status` is wired up.
-
-Either rephrase ("Browse, filter, and inspect") or finish the editor. The
-simplest finish: open a `Dialog` with an editable form on row click, mirroring
-`TeachPanel`. Effort: **M**.
+**20. ⊘ `/memories` editor.** *Stale — the `/memories` route was deleted on
+`ui/cleanup-and-fft-interactive`.*
 
 **21. Memory playground at `lg:` is too tight in the middle.**
 `lg:grid-cols-[360px_1fr_360px]` puts the field in a ~300px middle column at
@@ -391,3 +362,62 @@ Out of scope here, kept open:
   needs a `ResizeObserver` + `useState` rewrite, which is a real change to
   the SVG-letterbox math, not a one-liner.
 - Everything else listed in Tier 1 #6 onward and Tier 2 / Tier 3.
+
+
+---
+
+## Next up — recommended batch
+
+With Tier 1 done, the highest-leverage next move is a **playground polish PR**
+that batches five small items. Each is XS or S, all live in the playground
+area, and together they hit accessibility, honesty, and footgun-prevention in
+one cohesive read. Roughly half a day.
+
+Pick this batch unless you want a single bigger feature (see alternative
+below).
+
+| # | Ticket | File(s) | Why now | Effort |
+|---|---|---|---|---|
+| 1 | **#7** Skip-to-main link | `app/layout.tsx` | A11y baseline; one element, two-line CSS | XS |
+| 2 | **#9** Add E (entity) chip to RecallChallenge | `components/playground/recall-challenge.tsx` | Hybrid formula advertises 4 components; UI shows 3. Reviewer who notices the math notices this. | XS |
+| 3 | **#10** Differentiate status badges by semantic | `components/playground/recall-challenge.tsx` | Four amber chips read as redundant. Map `outdated`/`stale`/`superseded` → muted, `dubious` → red. | XS |
+| 4 | **#11** Confirm dialog on Distortion lab Reset | `components/playground/distortion-lab.tsx` | One unguarded click wipes the seed plus any teaching. Real footgun. | S |
+| 5 | **#12** Error UI on RecallChallenge / RecallDuel / DistortionLab mutations | three playground components | Backend 500 currently produces silent spinner-stops. Mirror the homepage pattern. | S |
+
+Why this set, in order:
+
+1. The skip link costs nothing and unblocks every keyboard user on every
+   page. It's also a credibility signal — reviewers who care about a11y will
+   tab to it deliberately.
+2. The E-chip and badge-differentiation fixes are about the playground being
+   *honest* about what it's showing. Both are one-CSS-class-per-place.
+3. The Reset confirm + the silent-error fixes are about robustness. Mirror
+   the same `Dialog` pattern already used by the homepage error states.
+
+After this batch, the next obvious move is **Tier 2 #8 (MemoryField as
+instrument)** — that one stands on its own as a feature, not a polish pass.
+
+---
+
+## Alternative — single bigger feature
+
+If the playground polish batch feels like too many small edits, replace it
+with **#8 alone**: make `MemoryField` keyboard-focusable, click-to-pin the
+tooltip, `Esc` to unpin, and add an `aria-label` per node containing the
+trace text. This turns the graph from decoration into a real instrument. ~Half
+a day, single PR, single visible feature in the demo.
+
+Effort: **M**. File: `components/playground/memory-field.tsx`.
+
+---
+
+## Status summary
+
+| Tier | Done | Stale (route deletion) | Open |
+|---|---|---|---|
+| 1 | #1 #2 #3 #4 #5 | — | — |
+| 2 | — | #15 (#16 re-targeted) | #6 #7 #8 #9 #10 #11 #12 #13 #14 #17 |
+| 3 | — | #20 | #18 #19 #21 #22 #23 #24 #25 |
+
+Tier 1 is complete. Everything else is open for a later pass; the recommended
+batch above takes the highest-leverage Tier 2 items.

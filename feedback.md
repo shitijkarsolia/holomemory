@@ -158,10 +158,11 @@ memory in the field can be contradicted. Effort: **S**.
 
 **16. ↻ Stats sidebar (re-targeted).** *Original targets (`/memories`,
 `/experiments`) are gone. The idea still applies if you want a small live
-counter on `/playground` — `api.stats()` is implemented and `MetricCard`
-exists at `components/metric-card.tsx` (currently unused). One option for the
-playground hero: a 3-tile strip showing total / active / by-source counts
-that updates after teach / noise / contradict actions.* Effort: **S**.
+counter on `/playground` — `api.stats()` is implemented. `MetricCard` was
+deleted in the Tier 3 #18 cleanup, so a future stats strip would build a
+tiny inline tile component instead. One option for the playground hero: a
+3-tile strip showing total / active / by-source counts that updates after
+teach / noise / contradict actions.* Effort: **S**.
 
 **17. `TeachPanel` form polish.**
 - The `<select>` for source is native; the rest of the playground uses native
@@ -182,22 +183,16 @@ Effort: **M** combined.
 
 ## Tier 3 — structure & robustness
 
-**18. ◐ Cut dead code.** *Partial — `InteractiveExplainer` deleted (file
-removed, import + render dropped from `playground/page.tsx`). The homepage
-`AlgebraSection` is now the single explainer for bind/superpose/unbind; no
-more two-explanations-of-the-same-thing on the same site.*
+**18. ✅ Cut dead code.** *Done — all three unused components removed:
+`InteractiveExplainer` (in the prior commit), plus `MetricCard` and
+`DemoScriptModal` in this cleanup pass. The homepage `AlgebraSection` is now
+the only explainer for bind/superpose/unbind on the site, and nothing in
+the bundle ships orphaned UI.*
 
-*Still open:*
-
-- `components/metric-card.tsx` — fold into Tier 2 #16 instead of deleting.
-- `components/playground/demo-script-modal.tsx` — references a "Seed Demo"
-  button that doesn't exist anymore (the playground says "Seed the lab").
-  Either delete or wire it to a `?` button in the playground hero.
-
-**19. Move `EXTRA_SEED` out of `playground/hero-section.tsx`.** 28 hardcoded
-memory objects in a UI component (lines 25–87) is a smell. Move to
-`lib/demo-data.ts` next to `DEMO_FACTS`. The hero already imports `api`; the
-seed file already exists. Effort: **XS**.
+**19. ✅ Move `EXTRA_SEED` out of `playground/hero-section.tsx`.** *Done — the
+28 hardcoded memory objects now live in `lib/demo-data.ts` next to
+`DEMO_FACTS`, exported as `EXTRA_SEED`. The hero imports it. UI file is back
+to being about UI.*
 
 **21. Memory playground at `lg:` is too tight in the middle.**
 `lg:grid-cols-[360px_1fr_360px]` puts the field in a ~300px middle column at
@@ -365,57 +360,67 @@ Shipped Tier 3 #23 and the `InteractiveExplainer` half of Tier 3 #18:
 
 Verification: `tsc --noEmit` clean. Lint count unchanged at 21.
 
+### Cleanup pass — finish #18 + #19 (same branch)
+
+Shipped the rest of Tier 3 #18 and all of #19:
+
+- **#18 (rest)** — `components/metric-card.tsx` and
+  `components/playground/demo-script-modal.tsx` both deleted. Neither was
+  imported anywhere; both shipped in the bundle for nothing. The
+  `DemoScriptModal` in particular pointed at a "Seed Demo" button that had
+  been renamed to "Seed the lab" months ago, so the modal could never have
+  opened from the current UI.
+- **#19** — the 28 hardcoded `EXTRA_SEED` memory objects moved out of
+  `components/playground/hero-section.tsx` and into `lib/demo-data.ts` next
+  to `DEMO_FACTS`. Hero now imports `EXTRA_SEED` rather than declaring it
+  inline. Same data, same behavior. UI file is back to being about UI.
+
+Verification: `tsc --noEmit` clean. Lint count unchanged at 21.
+
 
 ---
 
 ## Next up — recommended
 
 The original "playground polish" batch (Tier 2 #7, #9, #10, #11, #12) shipped
-on this branch. The next move splits cleanly into one of two directions —
-pick the one that matches the time you have.
+on this branch, then Tier 3 #23 (HeroDemo two-triples) and Tier 3 #18 + #19
+(cleanup pass). At this point the high-leverage items in Tier 1, the
+playground polish, and the codebase tidy-up are all done.
 
-### Option A · Single feature (≈ half a day) — **Tier 2 #8**
+What's left is small and optional:
 
-Make `MemoryField` a real instrument. Currently nodes are decoration: hover
-shows a tooltip, click does nothing, keyboard users can't reach the graph at
-all. Concretely:
+- **Tier 2 #6** — mobile nav refinement (hamburger / `aria-current`).
+- **Tier 2 #13** — sweep progress counter on the HRR Lab capacity / noise
+  sweeps.
+- **Tier 2 #14** — search-as-you-type combobox for the Distortion lab
+  contradict picker.
+- **Tier 2 #17** — `TeachPanel` form polish (chip-input tags, `Cmd+Enter`,
+  `aria-live`).
+- **Tier 3 #21** — widen the playground 3-column breakpoint so the memory
+  field isn't squeezed at 1024px.
+- **Tier 3 #22** — single-column on `<sm` for the HRR Lab unbind distractor
+  inputs.
+- **Tier 3 #24** — skip the `EncodeBlock` 6-second timed reveal under
+  `prefers-reduced-motion`.
+- **Tier 3 #25** — push `useForceLayout`'s 60-iteration O(n²) repulsion into
+  a Web Worker if memory counts grow.
 
-- Each node becomes a `<g tabIndex={0} role="button">` with an `aria-label`
-  that reads the trace text.
-- Click pins the tooltip until clicked again or `Esc`.
-- A "n traces" counter in the corner becomes a `<button>` opening a
-  slide-over with the full list (uses `sheet.tsx`).
+Pick by appetite. None of these are blockers.
 
-This is the single biggest "wait, that's nice" moment a careful reviewer
-will get on the playground. File:
-`frontend/components/playground/memory-field.tsx`. Effort: **M**.
-
-### Option B · Cleanup pass (≈ 30–60 min) — finish **Tier 3 #18 + #19**
-
-Short hygiene pass on what remains:
-
-- **#18 (rest)** — delete the two unreferenced components: `MetricCard`
-  (unused unless you adopt #16) and `DemoScriptModal` (orphan, references a
-  button that no longer exists).
-- **#19** — move the 28 hardcoded `EXTRA_SEED` facts out of
-  `playground/hero-section.tsx` into `lib/demo-data.ts`. Pure tidying, same
-  data, same behavior.
-
-Net: smaller bundle, data and UI cleanly separated. Roughly half an hour.
-
-My pick: **A first, B as a parallel-track cleanup any time.**
+> Tier 2 #8 (`MemoryField` as instrument) is **parked** at the author's
+> request and won't be re-recommended.
 
 ---
 
 ## Status summary
 
-| Tier | Done | Open |
-|---|---|---|
-| 1 | #1 #2 #3 #4 #5 | — |
-| 2 | #7 #9 #10 #11 #12 | #6 #8 #13 #14 #16 #17 |
-| 3 | #23 (#18 partial) | #18 (rest) #19 #21 #22 #24 #25 |
+| Tier | Done | Parked | Open |
+|---|---|---|---|
+| 1 | #1 #2 #3 #4 #5 | — | — |
+| 2 | #7 #9 #10 #11 #12 | #8 | #6 #13 #14 #16 #17 |
+| 3 | #18 #19 #23 | — | #21 #22 #24 #25 |
 
-Tier 1 complete. Playground polish batch (Tier 2 #7, #9, #10, #11, #12)
-shipped. Tier 3 #23 (HeroDemo two-triples) shipped. `InteractiveExplainer`
-deleted out of #18; the remaining unused-component cleanup (MetricCard,
-DemoScriptModal) is still open.
+Tier 1 done. Playground polish batch (Tier 2 #7, #9, #10, #11, #12) done.
+HeroDemo two-triples (Tier 3 #23) and the codebase cleanup (Tier 3 #18,
+#19) done. Tier 2 #8 (MemoryField as instrument) parked at the author's
+request. Remaining items are small polish and optimization.

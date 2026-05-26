@@ -3,6 +3,7 @@ import { IBM_Plex_Mono, Source_Sans_3, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { TopNav } from "@/components/top-nav";
+import { SiteFooter } from "@/components/site-footer";
 import {
   SITE_AUTHOR,
   SITE_DESCRIPTION,
@@ -136,6 +137,7 @@ export default function RootLayout({
         <Providers>
           <TopNav />
           <main className="pt-16">{children}</main>
+          <SiteFooter />
         </Providers>
         <script
           type="application/ld+json"

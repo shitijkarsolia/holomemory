@@ -62,7 +62,7 @@ export function MemoryField({ highlightedIds = [], lastEncodedId }: Props) {
   return (
     <div
       ref={containerRef}
-      className="relative h-full w-full overflow-hidden rounded-xl border border-border/30 bg-[oklch(0.08_0_0)]"
+      className="relative h-full w-full overflow-hidden rounded-xl border border-border/30 bg-[oklch(0.09_0.012_75)]"
     >
       <svg
         ref={svgRef}
@@ -101,7 +101,7 @@ export function MemoryField({ highlightedIds = [], lastEncodedId }: Props) {
               y1={p1.y}
               x2={p2.x}
               y2={p2.y}
-              stroke="oklch(0.65 0.17 160)"
+              stroke="var(--signal-amber)"
               strokeOpacity={
                 isHoverEdge
                   ? 0.45
@@ -148,10 +148,10 @@ export function MemoryField({ highlightedIds = [], lastEncodedId }: Props) {
                   r={radius}
                   fill={
                     isContradiction
-                      ? "oklch(0.6 0.2 25)"
+                      ? "var(--signal-red)"
                       : isLowTrust
-                        ? "oklch(0.4 0.05 160)"
-                        : "oklch(0.65 0.17 160)"
+                        ? "var(--muted-foreground)"
+                        : "var(--signal-amber)"
                   }
                   fillOpacity={isHovered || isHighlighted ? 0.95 : baseFillOpacity}
                   filter={
@@ -175,7 +175,7 @@ export function MemoryField({ highlightedIds = [], lastEncodedId }: Props) {
                     cy={pos.y}
                     r={radius}
                     fill="none"
-                    stroke="oklch(0.65 0.17 160)"
+                    stroke="var(--signal-amber)"
                     strokeWidth={1}
                     initial={{ r: radius, opacity: 1 }}
                     animate={{ r: radius * 4, opacity: 0 }}
@@ -291,19 +291,19 @@ function FieldLegend({ total }: { total: number }) {
 
       <div className="pointer-events-none absolute bottom-3 left-3 right-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 font-mono text-[10.5px] text-muted-foreground/80">
         <span className="flex items-center gap-1.5">
-          <span className="inline-block h-2.5 w-2.5 rounded-full bg-[oklch(0.65_0.17_160)]/85" />
+          <span className="inline-block h-2.5 w-2.5 rounded-full bg-[color:var(--signal-amber)]/85" />
           memory
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="inline-block h-2.5 w-2.5 rounded-full bg-[oklch(0.4_0.05_160)]/85" />
+          <span className="inline-block h-2.5 w-2.5 rounded-full bg-[color:var(--muted-foreground)]/70" />
           low trust
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="inline-block h-2.5 w-2.5 rounded-full bg-[oklch(0.6_0.2_25)]/85" />
+          <span className="inline-block h-2.5 w-2.5 rounded-full bg-[color:var(--signal-red)]/85" />
           contradiction
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="inline-block h-px w-4 bg-[oklch(0.65_0.17_160)]/60" />
+          <span className="inline-block h-px w-4 bg-[color:var(--signal-amber)]/60" />
           shared entity
         </span>
         <span className="ml-auto hidden text-muted-foreground/60 sm:inline">

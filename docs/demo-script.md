@@ -67,12 +67,6 @@ Open http://localhost:3000
 - Click through Bind, Superpose, Unbind steps
 - Show the algebraic notation and explanations
 
-### 8. Experiments
-
-- Navigate to /experiments
-- Run a benchmark comparing retrieval modes
-- Show recall@k and latency metrics
-
 ## Key Talking Points
 
 - No external LLM or embedding API required

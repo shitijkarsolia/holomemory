@@ -1,12 +1,46 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { makeApi } from "@/lib/api";
-import { useQueryClient } from "@tanstack/react-query";
+import { makeApi, type Api } from "@/lib/api";
+import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 import type { QueryResponse, RetrievalResult } from "@/lib/types";
 import { DEMO_FACTS } from "@/lib/demo-data";
 import { HYBRID_WEIGHTS, trustSignal } from "@/lib/hrr/retrieval";
+
+// Module-level cache so the demo seed runs at most once per browser
+// session even if the component remounts (React 18 Strict Mode dev
+// double-mounts effects, and a useRef guard wouldn't survive that
+// because refs reset on each new mount).
+let _seedPromise: Promise<void> | null = null;
+
+function ensureRecallSeed(api: Api, queryClient: QueryClient): Promise<void> {
+  if (_seedPromise) return _seedPromise;
+  _seedPromise = (async () => {
+    try {
+      await api.reset();
+      for (const fact of DEMO_FACTS) {
+        await api.memories.create({
+          text: fact.text,
+          kind: fact.kind,
+          subject: fact.subject,
+          predicate: fact.predicate,
+          object: fact.object,
+          entities: fact.entities,
+          tags: fact.tags,
+          source: fact.source,
+          trust: fact.trust,
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: ["field"] });
+    } catch (e) {
+      // Clear the cache so a future mount can retry.
+      _seedPromise = null;
+      throw e;
+    }
+  })();
+  return _seedPromise;
+}
 
 const EXAMPLE_QUERIES = [
   "Who should I ask about login?",
@@ -83,37 +117,21 @@ export function RecallBlock() {
   const [seedError, setSeedError] = useState(false);
   const [queryError, setQueryError] = useState<string | null>(null);
   const queryClient = useQueryClient();
-  const seedingRef = useRef(false);
   const api = useMemo(() => makeApi(), []);
 
   useEffect(() => {
-    if (seedingRef.current) return;
-    seedingRef.current = true;
-
-    const seed = async () => {
-      try {
-        await api.reset();
-        for (const fact of DEMO_FACTS) {
-          await api.memories.create({
-            text: fact.text,
-            kind: fact.kind,
-            subject: fact.subject,
-            predicate: fact.predicate,
-            object: fact.object,
-            entities: fact.entities,
-            tags: fact.tags,
-            source: fact.source,
-            trust: fact.trust,
-          });
-        }
-        queryClient.invalidateQueries({ queryKey: ["field"] });
-        setSeeded(true);
-      } catch {
-        setSeedError(true);
-      }
+    let cancelled = false;
+    ensureRecallSeed(api, queryClient)
+      .then(() => {
+        if (!cancelled) setSeeded(true);
+      })
+      .catch(() => {
+        if (!cancelled) setSeedError(true);
+      });
+    return () => {
+      cancelled = true;
     };
-    seed();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [api, queryClient]);
 
   const handleQuery = async (q: string) => {
     setQuery(q);

@@ -12,7 +12,11 @@ export function symbolVector(name: string): Float64Array {
   if (cached) return cached;
 
   const hash = sha256(`${HRR_SEED}:${name}`);
-  const seed = ((hash[0] << 24) | (hash[1] << 16) | (hash[2] << 8) | hash[3]) >>> 0;
+  // Use 8 bytes of the SHA-256 digest as a 64-bit seed for splitmix64.
+  // Previously took 4 bytes (32-bit), which had a non-negligible
+  // birthday-collision probability at large symbol vocabularies.
+  let seed = 0n;
+  for (let i = 0; i < 8; i++) seed = (seed << 8n) | BigInt(hash[i]);
   const vec = seededNormals(seed, HRR_DIMENSION);
 
   let norm = 0;
@@ -61,7 +65,12 @@ export function cosineSimilarity(a: Float64Array, b: Float64Array): number {
   normA = Math.sqrt(normA);
   normB = Math.sqrt(normB);
   if (normA === 0 || normB === 0) return 0;
-  return dot / (normA * normB);
+  // Clamp: floating-point summation can push the dot/norm ratio
+  // microscopically outside [-1, 1] for unit vectors.
+  const sim = dot / (normA * normB);
+  if (sim > 1) return 1;
+  if (sim < -1) return -1;
+  return sim;
 }
 
 export function cleanup(

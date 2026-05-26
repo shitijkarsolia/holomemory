@@ -6,6 +6,12 @@ import numpy as np
 from app.config import HRR_DIMENSION
 from app.memory.hrr import bind, superpose, symbol_vector
 
+# Maximum number of free-text tokens included in BOTH the encoded trace
+# (per memory) and the query probe. Kept in one place so encoder and
+# probe stay symmetric — previously the probe was capped at 10 while
+# the encoder used 20, silently dropping the tail of long queries.
+MAX_TOKENS = 20
+
 _STEMMER = Stemmer.Stemmer("english")
 _STEM_CACHE: dict[str, str] = {}
 
@@ -60,7 +66,7 @@ def encode_memory(
         traces.append(bind(role_tag, symbol_vector(tag.lower())))
 
     tokens = _tokenize(text)
-    for token in tokens[:20]:
+    for token in tokens[:MAX_TOKENS]:
         traces.append(bind(role_token, symbol_vector(token)))
 
     if not traces:
@@ -87,12 +93,18 @@ def build_query_probe(
 
     if target_role:
         role_vec = symbol_vector(f"__ROLE_{target_role.upper()}__")
-        for token in tokens[:10]:
+        for token in tokens[:MAX_TOKENS]:
             probes.append(bind(role_vec, symbol_vector(token)))
     else:
+        # Probe under BOTH __ROLE_TOKEN__ (matches free-text tokens that
+        # `encode_memory` binds the same way) and __ROLE_ENTITY__ (matches
+        # tokens that appear as structured entity fields, which `encode_memory`
+        # binds under role_entity). Tokens that appear in only one place
+        # contribute via their matching role; tokens that happen to be both
+        # body words AND named entities pick up signal from both — by design.
         role_token = symbol_vector("__ROLE_TOKEN__")
         role_entity = symbol_vector("__ROLE_ENTITY__")
-        for token in tokens[:10]:
+        for token in tokens[:MAX_TOKENS]:
             probes.append(bind(role_token, symbol_vector(token)))
             probes.append(bind(role_entity, symbol_vector(token)))
 

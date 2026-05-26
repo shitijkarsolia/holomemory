@@ -1,6 +1,12 @@
 import { newStemmer } from "snowball-stemmers";
 import { symbolVector, bind, superpose, HRR_DIMENSION } from "./hrr";
 
+// Maximum number of free-text tokens included in BOTH the encoded trace
+// (per memory) and the query probe. Mirrors backend MAX_TOKENS in
+// app/memory/encoder.py — the encoder and probe must stay symmetric so
+// long queries don't silently drop their tail.
+export const MAX_TOKENS = 20;
+
 export const STOPWORDS = new Set([
   "the", "a", "an", "is", "are", "was", "were", "be", "been", "being",
   "have", "has", "had", "do", "does", "did", "will", "would", "could",
@@ -86,7 +92,7 @@ export function encodeMemory(opts: {
     }
   }
 
-  const tokens = tokenize(opts.text).slice(0, 20);
+  const tokens = tokenize(opts.text).slice(0, MAX_TOKENS);
   for (const token of tokens) {
     traces.push(bind(roleToken, symbolVector(token)));
   }
@@ -96,7 +102,7 @@ export function encodeMemory(opts: {
 }
 
 export function buildQueryProbe(query: string, targetRole?: string): Float64Array {
-  const tokens = tokenize(query).slice(0, 10);
+  const tokens = tokenize(query).slice(0, MAX_TOKENS);
   if (tokens.length === 0) return new Float64Array(HRR_DIMENSION);
 
   const probes: Float64Array[] = [];
@@ -107,6 +113,10 @@ export function buildQueryProbe(query: string, targetRole?: string): Float64Arra
       probes.push(bind(roleVec, symbolVector(token)));
     }
   } else {
+    // Probe under BOTH __ROLE_TOKEN__ (matches free-text tokens encoded
+    // the same way) and __ROLE_ENTITY__ (matches tokens that appear as
+    // structured entity fields). Tokens that appear in both pick up
+    // signal from both — by design. Mirrors backend build_query_probe.
     const roleToken = symbolVector("__ROLE_TOKEN__");
     const roleEntity = symbolVector("__ROLE_ENTITY__");
     for (const token of tokens) {

@@ -16,6 +16,13 @@ def create_memory(db: Session, data: MemoryCreate) -> Memory:
 
     existing = _find_duplicate(db, data.text, subject, predicate, obj)
     if existing is not None:
+        if existing.status == "deleted":
+            # Reactivate instead of orphaning the deleted row alongside a
+            # new active one with identical content.
+            existing.status = "active"
+            existing.updated_at = datetime.now(timezone.utc)
+            db.commit()
+            db.refresh(existing)
         return existing
 
     memory = Memory(
@@ -207,13 +214,14 @@ def _find_duplicate(
     predicate: str | None,
     obj: str | None,
 ) -> Memory | None:
+    """Find any memory (active or otherwise) whose canonical key matches.
+
+    We deliberately include soft-deleted rows so that re-creating a memory
+    after a soft-delete reactivates the original instead of stranding the
+    tombstoned row next to a fresh active duplicate.
+    """
     key = _canonical_key(text, subject, predicate, obj)
-    candidates = (
-        db.query(Memory)
-        .filter(Memory.status == "active")
-        .filter(Memory.text == text)
-        .all()
-    )
+    candidates = db.query(Memory).filter(Memory.text == text).all()
     for m in candidates:
         if _canonical_key(m.text, m.subject, m.predicate, m.object) == key:
             return m

@@ -67,20 +67,26 @@ function tokenize(text) {
 const HRR_SEED = 42;
 const HRR_DIMENSION = 1024;
 
-function splitmix32(seed) {
-  let state = seed >>> 0;
+const C1 = 0x9e3779b97f4a7c15n;
+const C2 = 0xbf58476d1ce4e5b9n;
+const C3 = 0x94d049bb133111ebn;
+const MASK_64 = (1n << 64n) - 1n;
+const MASK_32 = 0xffffffffn;
+
+function splitmix64(seed) {
+  let state = seed & MASK_64;
   return () => {
-    state = (state + 0x9e3779b9) >>> 0;
+    state = (state + C1) & MASK_64;
     let z = state;
-    z = Math.imul(z ^ (z >>> 16), 0x85ebca6b) >>> 0;
-    z = Math.imul(z ^ (z >>> 13), 0xc2b2ae35) >>> 0;
-    z = (z ^ (z >>> 16)) >>> 0;
-    return z;
+    z = ((z ^ (z >> 30n)) * C2) & MASK_64;
+    z = ((z ^ (z >> 27n)) * C3) & MASK_64;
+    z = (z ^ (z >> 31n)) & MASK_64;
+    return Number((z >> 32n) & MASK_32);
   };
 }
 
 function seededNormals(seed, count) {
-  const rng = splitmix32(seed);
+  const rng = splitmix64(seed);
   const result = new Float64Array(count);
   for (let i = 0; i < count; i += 2) {
     const u1 = (rng() + 1) / 4294967297;
@@ -93,17 +99,19 @@ function seededNormals(seed, count) {
   return result;
 }
 
-// Minimal SHA-256 (same algorithm as frontend/lib/hrr/sha256.ts but returning
-// just the first 4 bytes packed into a u32, since that's all symbol_vector
-// needs as a seed).
-async function sha256SeedU32(input) {
+// Minimal SHA-256 — return the first 8 bytes packed into a 64-bit BigInt
+// (the seed for splitmix64). Uses node:crypto so we don't have to
+// reimplement SHA-256 here.
+async function sha256Seed64(input) {
   const { createHash } = await import("node:crypto");
   const buf = createHash("sha256").update(input).digest();
-  return ((buf[0] << 24) | (buf[1] << 16) | (buf[2] << 8) | buf[3]) >>> 0;
+  let seed = 0n;
+  for (let i = 0; i < 8; i++) seed = (seed << 8n) | BigInt(buf[i]);
+  return seed;
 }
 
 async function symbolVector(name) {
-  const seed = await sha256SeedU32(`${HRR_SEED}:${name}`);
+  const seed = await sha256Seed64(`${HRR_SEED}:${name}`);
   const vec = seededNormals(seed, HRR_DIMENSION);
   let norm = 0;
   for (let i = 0; i < HRR_DIMENSION; i++) norm += vec[i] * vec[i];

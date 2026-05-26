@@ -73,8 +73,14 @@ export function queryMemories(
     for (const e of memory.entities || []) for (const t of tokenize(e)) entitySet.add(t);
     if (memory.subject) for (const t of tokenize(memory.subject)) entitySet.add(t);
     if (memory.object) for (const t of tokenize(memory.object)) entitySet.add(t);
-    const entityMatches = queryTokens.filter((t) => entitySet.has(t)).length;
-    const entityOverlap = queryTokens.length > 0 ? entityMatches / queryTokens.length : 0;
+    // Jaccard: |intersection| / |union|. Mirrors backend
+    // _compute_entity_overlap. Previously divided by len(query_tokens),
+    // which made short queries score artificially high.
+    const queryTokenSet = new Set(queryTokens);
+    let intersection = 0;
+    for (const t of queryTokenSet) if (entitySet.has(t)) intersection++;
+    const unionSize = queryTokenSet.size + entitySet.size - intersection;
+    const entityOverlap = unionSize > 0 ? intersection / unionSize : 0;
 
     let final: number;
     if (mode === "holographic") {

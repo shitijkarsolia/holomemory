@@ -18,41 +18,47 @@ from app.config import HRR_DIMENSION, HRR_SEED
 
 
 # ----- PRNG --------------------------------------------------------------
-# A small 32-bit murmur-finalizer-style stream PRNG. Its only job is to
-# produce a deterministic stream of u32 values that *bit-matches* the
-# TypeScript implementation at frontend/lib/hrr/prng.ts. Both
-# `symbol_vector` here and `symbolVector` on the frontend feed the
-# same 32-bit seed (first 4 bytes of SHA-256 of "{HRR_SEED}:{name}")
-# through this PRNG and the same Box-Muller transform, so the two
-# implementations produce identical 1024-d vectors for any symbol.
+# Textbook splitmix64. Both `symbol_vector` here and `symbolVector` on the
+# frontend feed the same 64-bit seed (first 8 bytes of SHA-256 of
+# "{HRR_SEED}:{name}") through this PRNG and the same Box-Muller
+# transform, so the two implementations produce identical 1024-d vectors
+# for any symbol. Previously used a 32-bit murmur-finalizer stream with
+# only 4 bytes of seed, which had a non-negligible birthday-collision
+# probability at large symbol vocabularies. The parity check at
+# scripts/parity_check.mjs verifies bit-identical output on every run.
 #
 # We do NOT use numpy.random.default_rng for symbol vectors because
 # NumPy's PCG64 + Ziggurat-based standard_normal cannot be replicated
-# exactly in JS without bigints, which would make the parity check
-# practically impossible to keep honest.
+# exactly in JS without extreme effort, which would make the parity
+# check practically impossible to keep honest.
 
-_U32 = 0xFFFFFFFF
+_MASK64 = (1 << 64) - 1
+_MASK32 = 0xFFFFFFFF
+_C1 = 0x9E3779B97F4A7C15
+_C2 = 0xBF58476D1CE4E5B9
+_C3 = 0x94D049BB133111EB
 
 
-def _splitmix32(seed: int):
+def _splitmix64(seed: int):
     """Iterator returning u32 values; matches TS `splitmix64(seed)`."""
-    state = seed & _U32
+    state = seed & _MASK64
 
     def next_u32() -> int:
         nonlocal state
-        state = (state + 0x9E3779B9) & _U32
+        state = (state + _C1) & _MASK64
         z = state
-        z = ((z ^ (z >> 16)) * 0x85EBCA6B) & _U32
-        z = ((z ^ (z >> 13)) * 0xC2B2AE35) & _U32
-        z = (z ^ (z >> 16)) & _U32
-        return z
+        z = ((z ^ (z >> 30)) * _C2) & _MASK64
+        z = ((z ^ (z >> 27)) * _C3) & _MASK64
+        z = (z ^ (z >> 31)) & _MASK64
+        # Upper 32 bits — splitmix64's lower bits are weaker.
+        return (z >> 32) & _MASK32
 
     return next_u32
 
 
 def _seeded_normals(seed: int, count: int) -> np.ndarray:
-    """Box-Muller normals driven by `_splitmix32`; matches TS `seededNormals`."""
-    rng = _splitmix32(seed)
+    """Box-Muller normals driven by `_splitmix64`; matches TS `seededNormals`."""
+    rng = _splitmix64(seed)
     out = np.zeros(count, dtype=np.float64)
     i = 0
     while i < count:
@@ -70,13 +76,13 @@ def _seeded_normals(seed: int, count: int) -> np.ndarray:
 def symbol_vector(name: str, dimension: int = HRR_DIMENSION, seed: int = HRR_SEED) -> np.ndarray:
     """Generate a deterministic unit vector for a symbol name.
 
-    Uses a custom splitmix32 + Box-Muller pipeline (rather than numpy's
+    Uses a custom splitmix64 + Box-Muller pipeline (rather than numpy's
     default_rng) so that the TypeScript reimplementation can produce
-    bit-identical vectors. See `_splitmix32` above and the parity check
+    bit-identical vectors. See `_splitmix64` above and the parity check
     at `scripts/parity_check.mjs`.
     """
     hash_bytes = hashlib.sha256(f"{seed}:{name}".encode()).digest()
-    local_seed = int.from_bytes(hash_bytes[:4], "big")
+    local_seed = int.from_bytes(hash_bytes[:8], "big")
     vec = _seeded_normals(local_seed, dimension)
     norm = np.linalg.norm(vec)
     if norm > 0:

@@ -5,7 +5,7 @@ import { api } from "@/lib/api";
 import type { FieldResponse, Memory } from "@/lib/types";
 import { useForceLayout } from "@/lib/use-force-layout";
 import { motion, AnimatePresence } from "framer-motion";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 interface Props {
   highlightedIds?: string[];
@@ -16,6 +16,9 @@ const VIEW_W = 600;
 const VIEW_H = 400;
 
 export function MemoryField({ highlightedIds = [], lastEncodedId }: Props) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const svgRef = useRef<SVGSVGElement | null>(null);
+
   const { data } = useQuery<FieldResponse>({
     queryKey: ["field"],
     queryFn: api.field,
@@ -57,8 +60,12 @@ export function MemoryField({ highlightedIds = [], lastEncodedId }: Props) {
   }
 
   return (
-    <div className="relative h-full w-full overflow-hidden rounded-xl border border-border/30 bg-[oklch(0.08_0_0)]">
+    <div
+      ref={containerRef}
+      className="relative h-full w-full overflow-hidden rounded-xl border border-border/30 bg-[oklch(0.08_0_0)]"
+    >
       <svg
+        ref={svgRef}
         viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
         className="h-full w-full"
         preserveAspectRatio="xMidYMid meet"
@@ -182,7 +189,13 @@ export function MemoryField({ highlightedIds = [], lastEncodedId }: Props) {
       </svg>
 
       {hovered && hoveredPos && (
-        <NodeTooltip mem={hovered} x={hoveredPos.x} y={hoveredPos.y} />
+        <NodeTooltip
+          mem={hovered}
+          x={hoveredPos.x}
+          y={hoveredPos.y}
+          svgRef={svgRef}
+          containerRef={containerRef}
+        />
       )}
 
       <FieldLegend total={memories.length} />
@@ -190,18 +203,52 @@ export function MemoryField({ highlightedIds = [], lastEncodedId }: Props) {
   );
 }
 
-function NodeTooltip({ mem, x, y }: { mem: Memory; x: number; y: number }) {
-  const leftPct = (x / VIEW_W) * 100;
-  const topPct = (y / VIEW_H) * 100;
-  const placeLeft = leftPct > 60;
-  const placeAbove = topPct > 65;
+function NodeTooltip({
+  mem,
+  x,
+  y,
+  svgRef,
+  containerRef,
+}: {
+  mem: Memory;
+  x: number;
+  y: number;
+  svgRef: React.RefObject<SVGSVGElement | null>;
+  containerRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  // Convert SVG user-space (x, y) into pixel coordinates relative to
+  // the container. preserveAspectRatio='xMidYMid meet' letterboxes the
+  // SVG when the container's aspect ratio differs from VIEW_W:VIEW_H,
+  // so a naive percentage from SVG coords drifts off the actual node.
+  // getScreenCTM gives us the live transform that includes that letterbox.
+  let leftPx = (x / VIEW_W) * (containerRef.current?.clientWidth ?? VIEW_W);
+  let topPx = (y / VIEW_H) * (containerRef.current?.clientHeight ?? VIEW_H);
+  const svg = svgRef.current;
+  const container = containerRef.current;
+  if (svg && container) {
+    const ctm = svg.getScreenCTM();
+    if (ctm) {
+      const pt = svg.createSVGPoint();
+      pt.x = x;
+      pt.y = y;
+      const screen = pt.matrixTransform(ctm);
+      const rect = container.getBoundingClientRect();
+      leftPx = screen.x - rect.left;
+      topPx = screen.y - rect.top;
+    }
+  }
+
+  const containerW = containerRef.current?.clientWidth ?? VIEW_W;
+  const containerH = containerRef.current?.clientHeight ?? VIEW_H;
+  const placeLeft = leftPx > containerW * 0.6;
+  const placeAbove = topPx > containerH * 0.65;
 
   return (
     <div
       className="pointer-events-none absolute z-10 max-w-[260px] rounded-md border border-border/70 bg-card/95 px-3 py-2.5 shadow-lg backdrop-blur-sm"
       style={{
-        left: `${leftPct}%`,
-        top: `${topPct}%`,
+        left: `${leftPx}px`,
+        top: `${topPx}px`,
         transform: `translate(${placeLeft ? "calc(-100% - 14px)" : "14px"}, ${
           placeAbove ? "calc(-100% - 14px)" : "14px"
         })`,

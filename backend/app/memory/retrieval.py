@@ -219,6 +219,14 @@ def _hybrid(
 
 
 def _compute_entity_overlap(mem: Memory, query_tokens: list[str]) -> float:
+    """Jaccard overlap between query tokens and memory entity tokens.
+
+    Was `overlap / len(query_tokens)` (query-relative recall), which made
+    short queries score artificially high — a 2-token query with both
+    matching scored 1.0, a 10-token query with the same absolute overlap
+    scored 0.2. Jaccard normalizes by the union, giving a score that is
+    comparable across queries of different lengths.
+    """
     mem_entities: set[str] = set()
     for e in (mem.entities or []):
         mem_entities.update(_tokenize(e))
@@ -230,8 +238,10 @@ def _compute_entity_overlap(mem: Memory, query_tokens: list[str]) -> float:
     if not mem_entities or not query_tokens:
         return 0.0
 
-    overlap = sum(1 for t in query_tokens if t in mem_entities)
-    return overlap / len(query_tokens)
+    query_set = set(query_tokens)
+    overlap = len(query_set & mem_entities)
+    union = len(query_set | mem_entities)
+    return overlap / union if union else 0.0
 
 
 def _add_entity_reasons(sm: _ScoredMemory, mem: Memory, query_tokens: list[str]):

@@ -16,6 +16,13 @@ def create_memory(db: Session, data: MemoryCreate) -> Memory:
 
     existing = _find_duplicate(db, data.text, subject, predicate, obj)
     if existing is not None:
+        if existing.status == "deleted":
+            # Reactivate instead of orphaning the deleted row alongside a
+            # new active one with identical content.
+            existing.status = "active"
+            existing.updated_at = datetime.now(timezone.utc)
+            db.commit()
+            db.refresh(existing)
         return existing
 
     memory = Memory(
@@ -63,6 +70,25 @@ def update_memory(db: Session, memory_id: str, data: MemoryUpdate) -> Memory | N
     update_data = data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(memory, field, value)
+
+    # If the user changed `text` without supplying new subject/predicate/
+    # object, the stored SPO fields and the re-encoded vector would
+    # otherwise disagree (vector reflects new text, SPO reflects old).
+    # Re-extract any SPO field that wasn't explicitly provided in the patch.
+    if "text" in update_data:
+        derived = _extract_spo(MemoryCreate(
+            text=memory.text,
+            subject=memory.subject if "subject" in update_data else None,
+            predicate=memory.predicate if "predicate" in update_data else None,
+            object=memory.object if "object" in update_data else None,
+        ))
+        if "subject" not in update_data:
+            memory.subject = derived[0]
+        if "predicate" not in update_data:
+            memory.predicate = derived[1]
+        if "object" not in update_data:
+            memory.object = derived[2]
+
     memory.updated_at = datetime.now(timezone.utc)
 
     trace = encode_memory(
@@ -78,6 +104,10 @@ def update_memory(db: Session, memory_id: str, data: MemoryUpdate) -> Memory | N
         vec_record.vector = trace.tobytes()
     else:
         db.add(MemoryVector(memory_id=memory_id, vector=trace.tobytes(), dimension=len(trace)))
+
+    # Register any new symbols introduced by the update so the cleanup
+    # vocabulary stays current with the stored vector.
+    _register_symbols(db, memory)
 
     db.commit()
     db.refresh(memory)
@@ -95,8 +125,17 @@ def delete_memory(db: Session, memory_id: str) -> Memory | None:
     return memory
 
 
-def get_memory(db: Session, memory_id: str) -> Memory | None:
-    return db.query(Memory).filter(Memory.id == memory_id).first()
+def get_memory(db: Session, memory_id: str, include_deleted: bool = False) -> Memory | None:
+    """Fetch a memory by id.
+
+    By default, soft-deleted memories (status == 'deleted') are NOT returned —
+    callers must opt in via include_deleted=True. This prevents the contradiction
+    endpoint and GET /memories/{id} from operating on tombstoned rows.
+    """
+    query = db.query(Memory).filter(Memory.id == memory_id)
+    if not include_deleted:
+        query = query.filter(Memory.status != "deleted")
+    return query.first()
 
 
 def list_memories(
@@ -118,17 +157,37 @@ def list_memories(
         query = query.filter(Memory.kind == kind)
     if status:
         query = query.filter(Memory.status == status)
+    else:
+        # Default: hide soft-deleted memories. Callers that genuinely
+        # want deleted rows must pass status='deleted' explicitly.
+        query = query.filter(Memory.status != "deleted")
     if min_trust is not None:
         query = query.filter(Memory.trust >= min_trust)
 
-    memories = query.order_by(Memory.created_at.desc()).offset(offset).limit(limit).all()
+    query = query.order_by(Memory.created_at.desc())
 
-    if entity:
-        memories = [m for m in memories if entity.lower() in [e.lower() for e in (m.entities or [])]]
-    if tag:
-        memories = [m for m in memories if tag.lower() in [t.lower() for t in (m.tags or [])]]
+    # entity/tag live in JSON columns. SQLAlchemy can't push these into a
+    # portable WHERE clause across dialects, so we materialize the filtered
+    # rows in Python and *then* paginate. Done in this order — filter first,
+    # slice after — pagination is correct. Previously the LIMIT was applied
+    # in SQL before this filter ran, which silently truncated results.
+    if entity or tag:
+        rows = query.all()
+        if entity:
+            entity_lower = entity.lower()
+            rows = [
+                m for m in rows
+                if entity_lower in [e.lower() for e in (m.entities or [])]
+            ]
+        if tag:
+            tag_lower = tag.lower()
+            rows = [
+                m for m in rows
+                if tag_lower in [t.lower() for t in (m.tags or [])]
+            ]
+        return rows[offset : offset + limit]
 
-    return memories
+    return query.offset(offset).limit(limit).all()
 
 
 def get_memory_vector(db: Session, memory_id: str) -> np.ndarray | None:
@@ -155,13 +214,14 @@ def _find_duplicate(
     predicate: str | None,
     obj: str | None,
 ) -> Memory | None:
+    """Find any memory (active or otherwise) whose canonical key matches.
+
+    We deliberately include soft-deleted rows so that re-creating a memory
+    after a soft-delete reactivates the original instead of stranding the
+    tombstoned row next to a fresh active duplicate.
+    """
     key = _canonical_key(text, subject, predicate, obj)
-    candidates = (
-        db.query(Memory)
-        .filter(Memory.status == "active")
-        .filter(Memory.text == text)
-        .all()
-    )
+    candidates = db.query(Memory).filter(Memory.text == text).all()
     for m in candidates:
         if _canonical_key(m.text, m.subject, m.predicate, m.object) == key:
             return m

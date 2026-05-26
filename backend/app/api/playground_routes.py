@@ -44,7 +44,13 @@ NOISE_FILLERS = {
 
 @playground_router.post("/demo/seed")
 def demo_seed(db: Session = Depends(get_db)):
-    _hard_reset(db)
+    """Idempotently re-seed the curated Maya/Atlas demo scenario.
+
+    Only memories with source='demo' are removed before re-seeding —
+    user-created memories are preserved. (Previously this called
+    `_hard_reset`, which silently destroyed all user data.)
+    """
+    _delete_demo_memories(db)
     created = []
     for mem_data in MAYA_ATLAS_SCENARIO:
         mem = create_memory(db, mem_data)
@@ -154,4 +160,20 @@ def _hard_reset(db: Session):
     db.query(MemoryVector).delete()
     db.query(Symbol).delete()
     db.query(Memory).delete()
+    db.commit()
+
+
+def _delete_demo_memories(db: Session):
+    """Delete only memories tagged with source='demo' and their vectors.
+
+    Used by /demo/seed so re-seeding the demo scenario is idempotent
+    without destroying user-created memories.
+    """
+    demo_ids = [m.id for m in db.query(Memory.id).filter(Memory.source == "demo").all()]
+    if not demo_ids:
+        return
+    db.query(MemoryVector).filter(MemoryVector.memory_id.in_(demo_ids)).delete(
+        synchronize_session=False
+    )
+    db.query(Memory).filter(Memory.id.in_(demo_ids)).delete(synchronize_session=False)
     db.commit()

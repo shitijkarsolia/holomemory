@@ -175,17 +175,23 @@ SEED_MEMORIES = [
 
 
 def seed_database(db: Session) -> int:
-    """Seed the database with demo memories. Returns count of memories created."""
-    count = 0
+    """Seed the database with demo memories. Returns the count of memories
+    actually inserted (not the size of SEED_MEMORIES — `create_memory`
+    deduplicates on canonical key, so re-running this is a no-op when the
+    seed memories already exist).
+    """
+    from app.models import Memory
+
+    pre_existing = {m.id for m in db.query(Memory.id).all()}
     for mem_data in SEED_MEMORIES:
         create_memory(db, mem_data)
-        count += 1
+    post_ids = {m.id for m in db.query(Memory.id).all()}
+    inserted = len(post_ids - pre_existing)
 
     # Mark the superseded one
-    from app.models import Memory
     superseded = db.query(Memory).filter(Memory.text.ilike("%streamlit for quick demo%")).first()
     if superseded:
         superseded.status = "superseded"
         db.commit()
 
-    return count
+    return inserted

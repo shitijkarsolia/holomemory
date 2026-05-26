@@ -280,6 +280,7 @@ export function EncodeBlock() {
                   <div className="mt-5 space-y-3">
                     <BindingRow
                       label="subject ⊛ Sarah"
+                      labelOverride={`subject ⊛ ${triple.s}`}
                       delay={0.05}
                       color={SIGNAL.amber}
                       amplitudes={strips.subj}

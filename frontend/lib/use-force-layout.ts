@@ -12,6 +12,23 @@ export function useForceLayout(
   memories: Memory[],
   edges: FieldEdge[]
 ): Map<string, Position> {
+  // Build stable content keys so a refetch that returns *new array
+  // references with identical structure* doesn't trigger another
+  // 60 × O(n²) layout pass. Layout depends only on graph topology
+  // (which nodes exist + which edges connect them by weight), not on
+  // mutable fields like text or trust.
+  const memKey = useMemo(
+    () => memories.map((m) => m.id).join("|"),
+    [memories],
+  );
+  const edgeKey = useMemo(
+    () =>
+      edges
+        .map((e) => `${e.source_id}>${e.target_id}#${e.shared_entities.length}`)
+        .join(","),
+    [edges],
+  );
+
   return useMemo(() => {
     if (memories.length === 0) return new Map();
 
@@ -21,11 +38,20 @@ export function useForceLayout(
 
     const positions = new Map<string, { x: number; y: number; vx: number; vy: number }>();
 
-    const seed = memories.length;
-    let rng = seed;
+    // Hash all memory IDs together so two memory sets of the same size
+    // but different membership get different initial layouts. (Previous
+    // seed = memories.length collapsed all same-size sets to identical
+    // starting positions, which made add+delete jolt the whole graph.)
+    let seed = 2166136261 >>> 0;
+    for (const m of memories) {
+      for (let i = 0; i < m.id.length; i++) {
+        seed = Math.imul(seed ^ m.id.charCodeAt(i), 16777619) >>> 0;
+      }
+    }
+    let rng = seed >>> 0;
     const random = () => {
-      rng = (rng * 1664525 + 1013904223) & 0xffffffff;
-      return (rng >>> 0) / 0xffffffff;
+      rng = (Math.imul(rng, 1664525) + 1013904223) >>> 0;
+      return rng / 0x100000000;
     };
 
     memories.forEach((mem) => {
@@ -37,14 +63,6 @@ export function useForceLayout(
       });
     });
 
-    const edgeMap = new Map<string, Set<string>>();
-    edges.forEach((e) => {
-      if (!edgeMap.has(e.source_id)) edgeMap.set(e.source_id, new Set());
-      if (!edgeMap.has(e.target_id)) edgeMap.set(e.target_id, new Set());
-      edgeMap.get(e.source_id)!.add(e.target_id);
-      edgeMap.get(e.target_id)!.add(e.source_id);
-    });
-
     const iterations = 60;
     const repulsion = 800;
     const attraction = 0.005;
@@ -54,9 +72,9 @@ export function useForceLayout(
       const nodes = Array.from(positions.entries());
 
       for (let i = 0; i < nodes.length; i++) {
-        const [id1, p1] = nodes[i];
+        const [, p1] = nodes[i];
         for (let j = i + 1; j < nodes.length; j++) {
-          const [id2, p2] = nodes[j];
+          const [, p2] = nodes[j];
           const dx = p1.x - p2.x;
           const dy = p1.y - p2.y;
           const dist = Math.sqrt(dx * dx + dy * dy) + 1;
@@ -98,5 +116,9 @@ export function useForceLayout(
       result.set(id, { x: p.x, y: p.y });
     });
     return result;
-  }, [memories, edges]);
+    // memories/edges are intentionally omitted: they're new references on
+    // every refetch even when content is unchanged. The two content keys
+    // capture the topology that actually drives the layout.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [memKey, edgeKey]);
 }

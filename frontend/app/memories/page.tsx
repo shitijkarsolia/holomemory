@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { Memory } from "@/lib/types";
@@ -19,6 +19,7 @@ export default function MemoriesPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [sortMode, setSortMode] = useState<SortMode>("recent");
   const [selected, setSelected] = useState<Memory | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const { data: rawMemories = [], isLoading } = useQuery({
     queryKey: ["memories", search, kindFilter, statusFilter],
@@ -31,12 +32,21 @@ export default function MemoriesPage() {
     },
   });
 
-  const memories = (() => {
+  const memories = useMemo(() => {
     if (sortMode === "recent") return rawMemories;
-    const sorted = [...rawMemories];
-    sorted.sort((a, b) => (sortMode === "trust-asc" ? a.trust - b.trust : b.trust - a.trust));
-    return sorted;
-  })();
+    return [...rawMemories].sort((a, b) =>
+      sortMode === "trust-asc" ? a.trust - b.trust : b.trust - a.trust,
+    );
+  }, [rawMemories, sortMode]);
+
+  // Clear stale selection when the inspected memory disappears from the
+  // list (e.g. another tab deleted it, or the playground reset wiped it).
+  useEffect(() => {
+    if (!selected) return;
+    if (!rawMemories.some((m) => m.id === selected.id)) {
+      setSelected(null);
+    }
+  }, [rawMemories, selected]);
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.memories.delete(id),
@@ -44,6 +54,13 @@ export default function MemoriesPage() {
       queryClient.invalidateQueries({ queryKey: ["memories"] });
       queryClient.invalidateQueries({ queryKey: ["stats"] });
       setSelected(null);
+      setActionError(null);
+    },
+    onError: (err: unknown) => {
+      const msg = err instanceof Error ? err.message : "Delete failed";
+      setActionError(msg);
+      // Refresh the list — the memory may have been removed elsewhere.
+      queryClient.invalidateQueries({ queryKey: ["memories"] });
     },
   });
 
@@ -53,6 +70,12 @@ export default function MemoriesPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["memories"] });
       queryClient.invalidateQueries({ queryKey: ["stats"] });
+      setActionError(null);
+    },
+    onError: (err: unknown) => {
+      const msg = err instanceof Error ? err.message : "Update failed";
+      setActionError(msg);
+      queryClient.invalidateQueries({ queryKey: ["memories"] });
     },
   });
 
@@ -239,6 +262,7 @@ export default function MemoriesPage() {
                     variant="outline"
                     className="flex-1 gap-1 text-xs"
                     onClick={() => updateMutation.mutate({ id: selected.id, status: "stale" })}
+                    disabled={updateMutation.isPending}
                   >
                     <PencilSimple className="h-3 w-3" />
                     Mark Stale
@@ -250,12 +274,18 @@ export default function MemoriesPage() {
                     variant="outline"
                     className="flex-1 gap-1 text-xs text-red-500 hover:text-red-600"
                     onClick={() => deleteMutation.mutate(selected.id)}
+                    disabled={deleteMutation.isPending}
                   >
                     <Trash className="h-3 w-3" />
                     Delete
                   </Button>
                 )}
               </div>
+              {actionError && (
+                <p className="rounded-md border border-red-500/30 bg-red-500/5 px-3 py-2 text-[11.5px] text-red-500">
+                  {actionError}
+                </p>
+              )}
             </div>
           </div>
         )}

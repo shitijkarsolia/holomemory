@@ -1,7 +1,10 @@
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
+
+
+RetrievalMode = Literal["keyword", "holographic", "hybrid"]
 
 
 class MemoryCreate(BaseModel):
@@ -13,7 +16,7 @@ class MemoryCreate(BaseModel):
     entities: list[str] = Field(default_factory=list)
     tags: list[str] = Field(default_factory=list)
     source: str = "api"
-    trust: float = 0.7
+    trust: float = Field(default=0.7, ge=0.0, le=1.0)
 
 
 class MemoryUpdate(BaseModel):
@@ -24,7 +27,7 @@ class MemoryUpdate(BaseModel):
     object: str | None = None
     entities: list[str] | None = None
     tags: list[str] | None = None
-    trust: float | None = None
+    trust: float | None = Field(default=None, ge=0.0, le=1.0)
     status: str | None = None
 
 
@@ -47,9 +50,9 @@ class MemoryOut(BaseModel):
 
 
 class QueryRequest(BaseModel):
-    query: str
-    mode: str = "hybrid"
-    top_k: int = 5
+    query: str = Field(min_length=1)
+    mode: RetrievalMode = "hybrid"
+    top_k: int = Field(default=5, ge=1, le=100)
 
 
 class ScoreComponents(BaseModel):
@@ -88,8 +91,8 @@ class StatsResponse(BaseModel):
 
 
 class DuelRequest(BaseModel):
-    query: str
-    top_k: int = 5
+    query: str = Field(min_length=1)
+    top_k: int = Field(default=5, ge=1, le=100)
 
 
 class DuelResponse(BaseModel):
@@ -99,7 +102,7 @@ class DuelResponse(BaseModel):
 
 
 class NoiseRequest(BaseModel):
-    count: int = 5
+    count: int = Field(default=5, ge=1, le=100)
 
 
 class ContradictionRequest(BaseModel):
@@ -118,7 +121,7 @@ class FieldResponse(BaseModel):
 
 
 class ExperimentRequest(BaseModel):
-    num_queries: int = 10
+    num_queries: int = Field(default=10, ge=1, le=100)
 
 
 class ModeResult(BaseModel):

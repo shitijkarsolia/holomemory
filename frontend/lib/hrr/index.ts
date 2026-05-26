@@ -62,7 +62,8 @@ export class ClientEngine {
 
   demo = {
     seed: (): Promise<{ status: string; memories_created: number; memories: Memory[] }> => {
-      this.store.reset();
+      // Mirror backend: only wipe prior demo memories, not user-created ones.
+      this.store.deleteBySource("demo");
       const memories: Memory[] = [];
       for (const data of DEMO_SEED) memories.push(this.store.create(data));
       return Promise.resolve({ status: "ok", memories_created: memories.length, memories });

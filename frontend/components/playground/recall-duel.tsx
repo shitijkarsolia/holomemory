@@ -26,10 +26,19 @@ interface DuelResult {
 export function RecallDuel() {
   const [query, setQuery] = useState("");
   const [result, setResult] = useState<DuelResult | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const mutation = useMutation({
     mutationFn: () => api.duel(query, 5),
+    onMutate: () => {
+      setErrorMsg(null);
+    },
     onSuccess: (data) => setResult(data),
+    onError: (err: unknown) => {
+      const msg =
+        err instanceof Error ? err.message : "Duel failed. Try again.";
+      setErrorMsg(msg);
+    },
   });
 
   return (
@@ -75,6 +84,18 @@ export function RecallDuel() {
             {mutation.isPending ? "Running…" : "Duel"}
           </Button>
         </div>
+
+        {errorMsg && (
+          <div className="mb-6 rounded-md border border-[color:var(--signal-red)]/30 bg-[color:var(--signal-red)]/5 px-4 py-3 text-[13px] text-foreground/85">
+            {errorMsg}
+            <button
+              onClick={() => setErrorMsg(null)}
+              className="ml-3 text-xs text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
 
         <AnimatePresence mode="wait">
           {result && (

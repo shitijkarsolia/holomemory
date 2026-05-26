@@ -102,11 +102,10 @@ primitives are already installed). Also add `aria-current="page"` to the
 active link — currently only the visual underline distinguishes it. Effort:
 **S**.
 
-**7. "Skip to main content" link.** Add a visually-hidden-until-focused link
-as the first child of `<body>` that jumps to `#main`, then put `id="main"` on
-the `<main>` in `app/layout.tsx`. The site has heavy interactive content;
-keyboard-only users currently tab through the whole nav on every page. Effort:
-**XS**.
+**7. ✅ "Skip to main content" link.** *Done — `app/layout.tsx` now renders a
+`sr-only focus:not-sr-only` skip link as the first child of `<body>`, and
+the `<main>` element carries `id="main"`. Tab once on any route to surface
+it.*
 
 **8. `MemoryField` interactivity is hover-only.** Nodes aren't focusable, click
 does nothing, the tooltip closes the moment you mouse off. For a force-directed
@@ -123,34 +122,27 @@ graph that's the centerpiece of the playground:
 The current viz is decorative. With keyboard nav and click semantics it
 becomes a real instrument. Effort: **M**.
 
-**9. `RecallChallenge` shows H/K/T but not E.**
-`components/playground/recall-challenge.tsx` lines 226–243 list three component
-scores. The hybrid formula explained two lines above is `40·H + 30·K + 15·T +
-15·E`. Entity overlap (`r.components.entity_overlap`) is dropped from the chip
-row, so a query that wins on shared entities looks unexplained. Add the E chip
-with `oklch(0.62 0.07 155)` (the green you already use for entities in
-`recall-block.tsx`). Effort: **XS**.
+**9. ✅ `RecallChallenge` shows H/K/T but not E.** *Done — added the **E**
+chip alongside H/K/T using `oklch(0.62 0.07 155)` (the same green
+`recall-block.tsx` uses for entities). The chip row now matches the hybrid
+formula advertised two lines above it.*
 
-**10. Status badges all look identical.** `RecallChallenge` renders `outdated`,
-`dubious`, `stale`, `superseded` badges all with
-`border-[color:var(--signal-amber)]/50 text-[color:var(--signal-amber)]`.
-Reviewer scanning a result list sees four orange chips and reads them as
-redundant. Differentiate by semantics: `outdated`/`stale`/`superseded` →
-`--muted-foreground`, `dubious` → `--signal-red`. Use the shadcn `Badge`
-`variant` prop to keep this declarative. Effort: **XS**.
+**10. ✅ Status badges all look identical.** *Done — passive states
+(`outdated`, `stale`, `superseded`) re-tinted to `--muted-foreground`;
+concern states (`dubious`, `low trust`) re-tinted to `--signal-red`. The two
+groups now scan as different categories at a glance.*
 
-**11. Distortion lab Reset is unguarded.** `distortion-lab.tsx` ~line 73:
-clicking "Clear All" calls `api.reset()` immediately, wiping a 30-trace seed
-and any teaching the visitor has done in the last few minutes. Wrap it in the
-`Dialog` primitive (already installed) with a confirm step that names what's
-about to disappear ("This deletes 33 memories permanently. Type 'reset' to
-confirm." or just a two-step "Are you sure"). Effort: **S**.
+**11. ✅ Distortion lab Reset is unguarded.** *Done — wrapped the trigger in
+the shadcn `Dialog` primitive. Clicking "Clear All" now opens a confirmation
+that names the count of memories about to disappear; Cancel / Clear all
+memories actions live in the footer. The button is also disabled when the
+field is already empty.*
 
-**12. Recall mutation errors are silent.** `RecallChallenge`, `RecallDuel`,
-`DistortionLab` all use `useMutation` without an `onError` or visible error
-path. If `/query` returns 500, the spinner stops and the user sees nothing.
-The homepage versions (`EncodeBlock`, `RecallBlock`, `TrustBlock`) all handle
-this — port the pattern. Effort: **S**.
+**12. ✅ Recall mutation errors are silent.** *Done — `RecallChallenge`,
+`RecallDuel`, and all three mutations in `DistortionLab` (noise,
+contradiction, reset) now carry `onError` handlers that surface a friendly
+inline error block beneath the trigger, mirroring the homepage pattern. Each
+error is dismissible.*
 
 **13. HRR Lab capacity & noise sweeps don't expose progress.** `CapacityDemo.run`
 runs 12 × 3 trials and updates the chart as it goes (good), but the button text
@@ -329,51 +321,75 @@ Out of scope here, kept open:
   the SVG-letterbox math, not a one-liner.
 - Everything else listed in Tier 1 #6 onward and Tier 2 / Tier 3.
 
+### Playground polish batch (same branch, follow-up commit)
+
+Shipped Tier 2 #7, #9, #10, #11, #12 as a single follow-up:
+
+- **#7** — `app/layout.tsx` got a `sr-only focus:not-sr-only` skip link as
+  the first child of `<body>`, plus `id="main"` on the `<main>` element.
+- **#9** — `RecallChallenge` result cards now show the **E** (entity overlap)
+  chip alongside H/K/T, tinted with the same green `recall-block.tsx` uses.
+- **#10** — `RecallChallenge` status badges differentiated: passive states
+  (`outdated`, `stale`, `superseded`) on `--muted-foreground`; concern states
+  (`dubious`, `low trust`) on `--signal-red`.
+- **#11** — `DistortionLab` Reset wrapped in the `Dialog` primitive. Confirm
+  modal names the count of memories about to be wiped; Cancel / "Clear all
+  memories" actions in the footer. Reset button also disables when the field
+  is already empty.
+- **#12** — `RecallChallenge`, `RecallDuel`, and all three `DistortionLab`
+  mutations (noise, contradiction, reset) gained `onError` handlers with
+  inline dismissable error blocks that mirror the homepage pattern. Each
+  `onMutate` clears any previous error so the UI never stacks them.
+
+Verification: `tsc --noEmit` clean. Lint count unchanged at 21 (same
+pre-existing errors in `memory-field.tsx`'s `NodeTooltip` and
+`lib/hrr/hrr.ts`'s `gaussianNoise`); the batch added zero new errors.
+
 
 ---
 
-## Next up — recommended batch
+## Next up — recommended
 
-With Tier 1 done, the highest-leverage next move is a **playground polish PR**
-that batches five small items. Each is XS or S, all live in the playground
-area, and together they hit accessibility, honesty, and footgun-prevention in
-one cohesive read. Roughly half a day.
+The original "playground polish" batch (Tier 2 #7, #9, #10, #11, #12) shipped
+on this branch. The next move splits cleanly into one of two directions —
+pick the one that matches the time you have.
 
-Pick this batch unless you want a single bigger feature (see alternative
-below).
+### Option A · Single feature (≈ half a day) — **Tier 2 #8**
 
-| # | Ticket | File(s) | Why now | Effort |
-|---|---|---|---|---|
-| 1 | **#7** Skip-to-main link | `app/layout.tsx` | A11y baseline; one element, two-line CSS | XS |
-| 2 | **#9** Add E (entity) chip to RecallChallenge | `components/playground/recall-challenge.tsx` | Hybrid formula advertises 4 components; UI shows 3. Reviewer who notices the math notices this. | XS |
-| 3 | **#10** Differentiate status badges by semantic | `components/playground/recall-challenge.tsx` | Four amber chips read as redundant. Map `outdated`/`stale`/`superseded` → muted, `dubious` → red. | XS |
-| 4 | **#11** Confirm dialog on Distortion lab Reset | `components/playground/distortion-lab.tsx` | One unguarded click wipes the seed plus any teaching. Real footgun. | S |
-| 5 | **#12** Error UI on RecallChallenge / RecallDuel / DistortionLab mutations | three playground components | Backend 500 currently produces silent spinner-stops. Mirror the homepage pattern. | S |
+Make `MemoryField` a real instrument. Currently nodes are decoration: hover
+shows a tooltip, click does nothing, keyboard users can't reach the graph at
+all. Concretely:
 
-Why this set, in order:
+- Each node becomes a `<g tabIndex={0} role="button">` with an `aria-label`
+  that reads the trace text.
+- Click pins the tooltip until clicked again or `Esc`.
+- A "n traces" counter in the corner becomes a `<button>` opening a
+  slide-over with the full list (uses `sheet.tsx`).
 
-1. The skip link costs nothing and unblocks every keyboard user on every
-   page. It's also a credibility signal — reviewers who care about a11y will
-   tab to it deliberately.
-2. The E-chip and badge-differentiation fixes are about the playground being
-   *honest* about what it's showing. Both are one-CSS-class-per-place.
-3. The Reset confirm + the silent-error fixes are about robustness. Mirror
-   the same `Dialog` pattern already used by the homepage error states.
+This is the single biggest "wait, that's nice" moment a careful reviewer
+will get on the playground. File:
+`frontend/components/playground/memory-field.tsx`. Effort: **M**.
 
-After this batch, the next obvious move is **Tier 2 #8 (MemoryField as
-instrument)** — that one stands on its own as a feature, not a polish pass.
+### Option B · Cleanup pass (≈ 1–2 hours) — **Tier 3 #18 + #19 + #23**
 
----
+A short hygiene pass that makes the codebase smaller and the homepage demo
+more honest:
 
-## Alternative — single bigger feature
+- **#18** — delete unused components: `MetricCard` (unreferenced unless
+  you adopt #16), `DemoScriptModal` (orphan, references a button that no
+  longer exists), and either delete `InteractiveExplainer` from
+  `playground/page.tsx` (it duplicates the homepage `AlgebraSection`) or
+  repurpose it to drive the live engine.
+- **#19** — move the 28 hardcoded `EXTRA_SEED` facts out of
+  `playground/hero-section.tsx` into `lib/demo-data.ts`.
+- **#23** — `HeroDemo` text reads "Sarah owns the auth service **and
+  maintains the login flow**" but only encodes the first clause. Either
+  trim the fact or render two triples so the demo matches its own copy.
 
-If the playground polish batch feels like too many small edits, replace it
-with **#8 alone**: make `MemoryField` keyboard-focusable, click-to-pin the
-tooltip, `Esc` to unpin, and add an `aria-label` per node containing the
-trace text. This turns the graph from decoration into a real instrument. ~Half
-a day, single PR, single visible feature in the demo.
+Net: `-1` component, smaller diff than it looks, the homepage demo stops
+contradicting itself.
 
-Effort: **M**. File: `components/playground/memory-field.tsx`.
+My pick: **A first, B as a parallel-track cleanup any time.**
 
 ---
 
@@ -382,8 +398,9 @@ Effort: **M**. File: `components/playground/memory-field.tsx`.
 | Tier | Done | Open |
 |---|---|---|
 | 1 | #1 #2 #3 #4 #5 | — |
-| 2 | — | #6 #7 #8 #9 #10 #11 #12 #13 #14 #16 #17 |
+| 2 | #7 #9 #10 #11 #12 | #6 #8 #13 #14 #16 #17 |
 | 3 | — | #18 #19 #21 #22 #23 #24 #25 |
 
-Tier 1 is complete. Everything else is open for a later pass; the recommended
-batch above takes the highest-leverage Tier 2 items.
+Tier 1 complete. Playground polish batch (Tier 2 #7, #9, #10, #11, #12) also
+shipped on this branch. The recommended next moves are scoped above under
+"Next up — recommended".

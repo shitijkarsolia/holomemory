@@ -38,12 +38,21 @@ export function RecallChallenge({ onResults }: Props) {
   const [query, setQuery] = useState("");
   const [mode, setMode] = useState<"hybrid" | "holographic" | "keyword">("hybrid");
   const [result, setResult] = useState<QueryResponse | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const mutation = useMutation({
     mutationFn: () => api.query(query, mode, 5),
+    onMutate: () => {
+      setErrorMsg(null);
+    },
     onSuccess: (data) => {
       setResult(data);
       onResults?.(data.results.map((r) => r.memory.id));
+    },
+    onError: (err: unknown) => {
+      const msg =
+        err instanceof Error ? err.message : "Recall failed. Try again.";
+      setErrorMsg(msg);
     },
   });
 
@@ -124,6 +133,18 @@ export function RecallChallenge({ onResults }: Props) {
         {mutation.isPending ? "Probing…" : "Recall"}
       </Button>
 
+      {errorMsg && (
+        <div className="rounded-md border border-[color:var(--signal-red)]/30 bg-[color:var(--signal-red)]/5 px-3.5 py-2.5 text-[12.5px] text-foreground/85">
+          {errorMsg}
+          <button
+            onClick={() => setErrorMsg(null)}
+            className="ml-3 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       <AnimatePresence mode="wait">
         {result && (
           <motion.div
@@ -184,10 +205,16 @@ export function RecallChallenge({ onResults }: Props) {
                         <span className="text-[color:var(--signal-violet)]/80">T</span>{" "}
                         {(r.components.trust * 100).toFixed(0)}
                       </span>
+                      <span title="Entity overlap: shared named entities between the query and the memory.">
+                        <span style={{ color: "oklch(0.62 0.07 155 / 0.85)" }}>
+                          E
+                        </span>{" "}
+                        {(r.components.entity_overlap * 100).toFixed(0)}
+                      </span>
                       {(r.memory.tags || []).includes("outdated") && (
                         <Badge
                           variant="outline"
-                          className="border-[color:var(--signal-amber)]/50 text-[10px] text-[color:var(--signal-amber)]"
+                          className="border-muted-foreground/40 text-[10px] text-muted-foreground"
                         >
                           outdated
                         </Badge>
@@ -195,7 +222,7 @@ export function RecallChallenge({ onResults }: Props) {
                       {(r.memory.tags || []).includes("dubious") && (
                         <Badge
                           variant="outline"
-                          className="border-[color:var(--signal-amber)]/50 text-[10px] text-[color:var(--signal-amber)]"
+                          className="border-[color:var(--signal-red)]/45 text-[10px] text-[color:var(--signal-red)]"
                         >
                           dubious
                         </Badge>
@@ -204,7 +231,7 @@ export function RecallChallenge({ onResults }: Props) {
                         r.memory.status === "superseded") && (
                         <Badge
                           variant="outline"
-                          className="border-[color:var(--signal-amber)]/50 text-[10px] text-[color:var(--signal-amber)]"
+                          className="border-muted-foreground/40 text-[10px] text-muted-foreground"
                         >
                           {r.memory.status}
                         </Badge>
@@ -212,7 +239,7 @@ export function RecallChallenge({ onResults }: Props) {
                       {r.memory.trust < 0.4 && (
                         <Badge
                           variant="outline"
-                          className="border-destructive/40 text-[10px] text-destructive"
+                          className="border-[color:var(--signal-red)]/45 text-[10px] text-[color:var(--signal-red)]"
                         >
                           low trust
                         </Badge>

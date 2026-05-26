@@ -121,14 +121,30 @@ def list_memories(
     if min_trust is not None:
         query = query.filter(Memory.trust >= min_trust)
 
-    memories = query.order_by(Memory.created_at.desc()).offset(offset).limit(limit).all()
+    query = query.order_by(Memory.created_at.desc())
 
-    if entity:
-        memories = [m for m in memories if entity.lower() in [e.lower() for e in (m.entities or [])]]
-    if tag:
-        memories = [m for m in memories if tag.lower() in [t.lower() for t in (m.tags or [])]]
+    # entity/tag live in JSON columns. SQLAlchemy can't push these into a
+    # portable WHERE clause across dialects, so we materialize the filtered
+    # rows in Python and *then* paginate. Done in this order — filter first,
+    # slice after — pagination is correct. Previously the LIMIT was applied
+    # in SQL before this filter ran, which silently truncated results.
+    if entity or tag:
+        rows = query.all()
+        if entity:
+            entity_lower = entity.lower()
+            rows = [
+                m for m in rows
+                if entity_lower in [e.lower() for e in (m.entities or [])]
+            ]
+        if tag:
+            tag_lower = tag.lower()
+            rows = [
+                m for m in rows
+                if tag_lower in [t.lower() for t in (m.tags or [])]
+            ]
+        return rows[offset : offset + limit]
 
-    return memories
+    return query.offset(offset).limit(limit).all()
 
 
 def get_memory_vector(db: Session, memory_id: str) -> np.ndarray | None:

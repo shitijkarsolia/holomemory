@@ -7,12 +7,21 @@ import { MemoryStore } from "./store";
 // Weights for the hybrid scoring formula. Kept in one place so the explainer
 // UI (BiggestComponent) can use identical weights when deciding which
 // component drove a result. Must stay in sync with backend/app/memory/retrieval.py.
+//
+// Relevance signals (holographic + keyword + entity) get 90% of the weight;
+// trust gets 10% and is centered at 0.5 via `trustSignal` so a neutral-trust
+// memory contributes 0 from the trust term and only above-neutral trust adds.
 export const HYBRID_WEIGHTS = {
-  holographic: 0.4,
-  keyword: 0.3,
-  trust: 0.15,
-  entity: 0.15,
+  holographic: 0.45,
+  keyword: 0.35,
+  trust: 0.1,
+  entity: 0.1,
 } as const;
+
+/** Map raw trust [0,1] to a scoring signal in [0,1] centered at 0.5. */
+export function trustSignal(trust: number): number {
+  return Math.max(0, (trust - 0.5) * 2);
+}
 
 export function queryMemories(
   store: MemoryStore,
@@ -73,10 +82,12 @@ export function queryMemories(
     } else if (mode === "keyword") {
       final = keyword;
     } else {
+      // Trust enters centered at 0.5 (see trustSignal) so it acts as a
+      // mild prior rather than a constant boost.
       final =
         HYBRID_WEIGHTS.holographic * holographic +
         HYBRID_WEIGHTS.keyword * keyword +
-        HYBRID_WEIGHTS.trust * trust +
+        HYBRID_WEIGHTS.trust * trustSignal(trust) +
         HYBRID_WEIGHTS.entity * entityOverlap;
     }
 

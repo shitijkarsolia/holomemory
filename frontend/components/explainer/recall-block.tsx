@@ -6,7 +6,7 @@ import { makeApi } from "@/lib/api";
 import { useQueryClient } from "@tanstack/react-query";
 import type { QueryResponse, RetrievalResult } from "@/lib/types";
 import { DEMO_FACTS } from "@/lib/demo-data";
-import { HYBRID_WEIGHTS } from "@/lib/hrr/retrieval";
+import { HYBRID_WEIGHTS, trustSignal } from "@/lib/hrr/retrieval";
 
 const EXAMPLE_QUERIES = [
   "Who should I ask about login?",
@@ -405,8 +405,10 @@ function ResultRow({ r, index }: { r: RetrievalResult; index: number }) {
 
 function BiggestComponent({ r }: { r: RetrievalResult }) {
   // Report the largest WEIGHTED contribution, not the largest unweighted
-  // component value. Without this, trust (always ~0.85-0.95 in the seed)
-  // wins the argmax for every memory and the copy is tautological.
+  // component value. The trust component enters the score *centered* at 0.5
+  // (see retrieval.ts `trustSignal`), so we apply the same transform here —
+  // otherwise raw trust=0.9 would still appear to dominate even though its
+  // actual contribution to the final score is small.
   const entries = [
     {
       label: "holographic similarity (vector overlap)",
@@ -422,7 +424,7 @@ function BiggestComponent({ r }: { r: RetrievalResult }) {
     },
     {
       label: "trust in the source",
-      value: r.components.trust,
+      value: trustSignal(r.components.trust),
       weight: HYBRID_WEIGHTS.trust,
       color: "var(--signal-violet)",
     },

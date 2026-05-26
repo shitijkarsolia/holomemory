@@ -84,7 +84,7 @@ export const DEMO_SEED: MemoryCreate[] = [
     object: "atlas",
     entities: ["maya", "atlas", "agent memory"],
     tags: ["project", "fact"],
-    source: "user",
+    source: "demo",
     trust: 0.95,
   },
   {
@@ -95,7 +95,7 @@ export const DEMO_SEED: MemoryCreate[] = [
     object: "fastapi sqlite numpy nextjs",
     entities: ["atlas", "fastapi", "sqlite", "numpy", "nextjs"],
     tags: ["stack", "technology"],
-    source: "user",
+    source: "demo",
     trust: 0.95,
   },
   {
@@ -106,7 +106,7 @@ export const DEMO_SEED: MemoryCreate[] = [
     object: "concise technical explanations",
     entities: ["maya", "explanations"],
     tags: ["preference", "communication"],
-    source: "user",
+    source: "demo",
     trust: 0.9,
   },
   {
@@ -117,7 +117,7 @@ export const DEMO_SEED: MemoryCreate[] = [
     object: "vim",
     entities: ["maya", "vim", "editor"],
     tags: ["preference", "editor", "historical"],
-    source: "user",
+    source: "demo",
     trust: 0.6,
   },
   {
@@ -128,7 +128,7 @@ export const DEMO_SEED: MemoryCreate[] = [
     object: "cursor",
     entities: ["maya", "cursor", "editor", "ai"],
     tags: ["preference", "editor", "current"],
-    source: "user",
+    source: "demo",
     trust: 0.9,
   },
   {
@@ -139,7 +139,7 @@ export const DEMO_SEED: MemoryCreate[] = [
     object: "subject-predicate-object traces",
     entities: ["atlas", "memory traces", "circular convolution"],
     tags: ["architecture", "encoding"],
-    source: "document",
+    source: "demo",
     trust: 0.95,
   },
   {
@@ -150,7 +150,7 @@ export const DEMO_SEED: MemoryCreate[] = [
     object: "trust scores for downranking",
     entities: ["atlas", "trust scores", "recall"],
     tags: ["architecture", "retrieval"],
-    source: "document",
+    source: "demo",
     trust: 0.9,
   },
   {
@@ -161,7 +161,7 @@ export const DEMO_SEED: MemoryCreate[] = [
     object: "bananas",
     entities: ["atlas", "bananas", "vectors"],
     tags: ["architecture", "storage"],
-    source: "synthetic",
+    source: "demo",
     trust: 0.15,
   },
   {
@@ -172,7 +172,7 @@ export const DEMO_SEED: MemoryCreate[] = [
     object: "cloud dependencies",
     entities: ["atlas", "cloud", "local-first"],
     tags: ["constraint", "architecture"],
-    source: "user",
+    source: "demo",
     trust: 0.9,
   },
   {
@@ -183,7 +183,7 @@ export const DEMO_SEED: MemoryCreate[] = [
     object: "vector-symbolic architectures",
     entities: ["maya", "vector-symbolic architectures", "cognitive modeling"],
     tags: ["interest", "research"],
-    source: "chat",
+    source: "demo",
     trust: 0.8,
   },
 ];

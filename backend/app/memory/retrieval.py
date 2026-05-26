@@ -20,13 +20,30 @@ from app.services.memory_service import get_all_vectors, list_memories
 
 # Weights for the hybrid scoring formula. Kept in one place so the explainer
 # UI (BiggestComponent) can use identical weights when deciding which
-# component drove a result.
+# component drove a result. Must sum to 1 and stay in sync with the
+# TypeScript mirror at frontend/lib/hrr/retrieval.ts.
+#
+# Relevance signals (holographic + keyword + entity) get 90% of the weight;
+# trust gets 10% and is *centered around 0.5* in the scoring formula so a
+# neutral-trust memory contributes 0 from the trust term, only above-neutral
+# trust adds, and below-neutral trust contributes nothing (rather than the
+# raw value adding ~0.13 unconditionally as it did before).
 HYBRID_WEIGHTS = {
-    "holographic": 0.4,
-    "keyword": 0.3,
-    "trust": 0.15,
-    "entity": 0.15,
+    "holographic": 0.45,
+    "keyword": 0.35,
+    "trust": 0.10,
+    "entity": 0.10,
 }
+
+
+def trust_signal(trust: float) -> float:
+    """Map raw trust [0,1] to a scoring signal in [0,1] centered at 0.5.
+
+    trust=0.5 -> 0   (neutral, no contribution)
+    trust=1.0 -> 1   (full positive contribution)
+    trust<0.5 -> 0   (clamped; low trust shouldn't *subtract*, just not boost)
+    """
+    return max(0.0, (trust - 0.5) * 2.0)
 
 
 @dataclass
@@ -177,10 +194,14 @@ def _hybrid(
         entity_overlap = _compute_entity_overlap(mem, query_tokens)
         sm.entity_overlap = entity_overlap
 
+        # Trust enters the score *centered* at 0.5 so it functions as a
+        # mild prior, not a constant ~0.135 boost that lets high-trust
+        # noise outrank a real holographic match. The raw mem.trust is
+        # still surfaced via sm.trust_score for the UI.
         sm.final_score = (
             HYBRID_WEIGHTS["holographic"] * sm.holographic_score
             + HYBRID_WEIGHTS["keyword"] * sm.keyword_score
-            + HYBRID_WEIGHTS["trust"] * sm.trust_score
+            + HYBRID_WEIGHTS["trust"] * trust_signal(mem.trust)
             + HYBRID_WEIGHTS["entity"] * sm.entity_overlap
         )
 

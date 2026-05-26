@@ -164,12 +164,13 @@ export function RecallBlock() {
 
       {seedError && (
         <div className="mt-5 rounded-md border border-[color:var(--signal-red)]/30 bg-[color:var(--signal-red)]/5 px-4 py-3 text-[13px] text-foreground/85">
-          Couldn&rsquo;t reach the backend to seed memories. The rest of the
-          page still works. Start the backend (see README) to use this block.
+          Couldn&rsquo;t reach the backend to seed memories. The block below
+          falls back to a client-side engine pre-loaded with the same demo
+          facts &mdash; queries still work.
         </div>
       )}
 
-      {seeded && (
+      {(seeded || seedError) && (
         <>
           <div className="mt-6 rounded-md border border-border bg-card/40 p-4">
             <p className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">

@@ -182,20 +182,17 @@ Effort: **M** combined.
 
 ## Tier 3 — structure & robustness
 
-**18. Cut dead code.** Three components ship that nothing imports:
+**18. ◐ Cut dead code.** *Partial — `InteractiveExplainer` deleted (file
+removed, import + render dropped from `playground/page.tsx`). The homepage
+`AlgebraSection` is now the single explainer for bind/superpose/unbind; no
+more two-explanations-of-the-same-thing on the same site.*
+
+*Still open:*
 
 - `components/metric-card.tsx` — fold into Tier 2 #16 instead of deleting.
 - `components/playground/demo-script-modal.tsx` — references a "Seed Demo"
   button that doesn't exist anymore (the playground says "Seed the lab").
   Either delete or wire it to a `?` button in the playground hero.
-- `components/playground/interactive-explainer.tsx` — semantically duplicates
-  `components/explainer/algebra-section.tsx`. Same three operations, same
-  notation, less polished. Either delete and rely on the homepage, or
-  repurpose as a step-by-step *with the live engine doing each step under the
-  cards* — that would actually pay its rent on the playground page.
-
-Effort: **S** to delete, **M** to repurpose `InteractiveExplainer` into a
-live-stepped version.
 
 **19. Move `EXTRA_SEED` out of `playground/hero-section.tsx`.** 28 hardcoded
 memory objects in a UI component (lines 25–87) is a smell. Move to
@@ -215,12 +212,14 @@ at 390px. Switch to a single column on `<sm` with each labeled
 `subject/predicate/object`. Same for the main triple inputs above. Effort:
 **XS**.
 
-**23. `HeroDemo` honesty gap.** The fact text reads "Sarah owns the auth
-service **and maintains the login flow**", but only the first clause's triple
-is shown. Either trim the fact to "Sarah owns the auth service.", or render
-*two* triples (the second `Sarah / maintains / login flow`) to match. The
-bind/superpose path then has 6 strips, which actually reinforces the "many
-facts in one trace" claim. Effort: **S**.
+**23. ✅ `HeroDemo` honesty gap.** *Done — the hero now encodes both clauses
+of the example sentence. Two triples (sharing the `Sarah` subject) decompose
+side-by-side, six bind strips render grouped by fact, and the combined trace
+weights the subject signal twice to honor the math (it's bound in both
+facts). The probe answer recovers `Sarah` plus `login flow` from the second
+clause, which actually demonstrates the "many facts in one trace" claim the
+page keeps making. The two `r_s ⊛ Sarah` strips are visually identical on
+purpose — same role + same value → same vector.*
 
 **24. `prefer-reduced-motion` coverage of the probe-sweep.** `globals.css`
 zeros `.probe-sweep` animation correctly. Verify Framer Motion's per-component
@@ -345,6 +344,27 @@ Verification: `tsc --noEmit` clean. Lint count unchanged at 21 (same
 pre-existing errors in `memory-field.tsx`'s `NodeTooltip` and
 `lib/hrr/hrr.ts`'s `gaussianNoise`); the batch added zero new errors.
 
+### HeroDemo two-triples + delete `InteractiveExplainer` (same branch)
+
+Shipped Tier 3 #23 and the `InteractiveExplainer` half of Tier 3 #18:
+
+- **#23** — `components/explainer/hero-demo.tsx` now renders two triples
+  sharing the `Sarah` subject. Decompose section shows `fact 1` and `fact 2`
+  blocks side-by-side; bind section renders six strips grouped by fact (the
+  two `r_s ⊛ Sarah` strips are visually identical on purpose to demonstrate
+  determinism); the combined trace double-weights the subject hash to honor
+  the math (subject is bound in both facts); probe answer recovers `Sarah` +
+  `login flow`. The hero now actually demonstrates the "many facts in one
+  trace" claim the page keeps making.
+- **#18 (partial)** — `components/playground/interactive-explainer.tsx`
+  deleted. Import + render dropped from `app/playground/page.tsx`. The
+  homepage `AlgebraSection` is now the single explainer for the three
+  operations; no more two-explanations-of-the-same-thing on the same site.
+  `MetricCard` and `DemoScriptModal` still ship unused — left for a later
+  cleanup pass.
+
+Verification: `tsc --noEmit` clean. Lint count unchanged at 21.
+
 
 ---
 
@@ -370,24 +390,18 @@ This is the single biggest "wait, that's nice" moment a careful reviewer
 will get on the playground. File:
 `frontend/components/playground/memory-field.tsx`. Effort: **M**.
 
-### Option B · Cleanup pass (≈ 1–2 hours) — **Tier 3 #18 + #19 + #23**
+### Option B · Cleanup pass (≈ 30–60 min) — finish **Tier 3 #18 + #19**
 
-A short hygiene pass that makes the codebase smaller and the homepage demo
-more honest:
+Short hygiene pass on what remains:
 
-- **#18** — delete unused components: `MetricCard` (unreferenced unless
-  you adopt #16), `DemoScriptModal` (orphan, references a button that no
-  longer exists), and either delete `InteractiveExplainer` from
-  `playground/page.tsx` (it duplicates the homepage `AlgebraSection`) or
-  repurpose it to drive the live engine.
+- **#18 (rest)** — delete the two unreferenced components: `MetricCard`
+  (unused unless you adopt #16) and `DemoScriptModal` (orphan, references a
+  button that no longer exists).
 - **#19** — move the 28 hardcoded `EXTRA_SEED` facts out of
-  `playground/hero-section.tsx` into `lib/demo-data.ts`.
-- **#23** — `HeroDemo` text reads "Sarah owns the auth service **and
-  maintains the login flow**" but only encodes the first clause. Either
-  trim the fact or render two triples so the demo matches its own copy.
+  `playground/hero-section.tsx` into `lib/demo-data.ts`. Pure tidying, same
+  data, same behavior.
 
-Net: `-1` component, smaller diff than it looks, the homepage demo stops
-contradicting itself.
+Net: smaller bundle, data and UI cleanly separated. Roughly half an hour.
 
 My pick: **A first, B as a parallel-track cleanup any time.**
 
@@ -399,8 +413,9 @@ My pick: **A first, B as a parallel-track cleanup any time.**
 |---|---|---|
 | 1 | #1 #2 #3 #4 #5 | — |
 | 2 | #7 #9 #10 #11 #12 | #6 #8 #13 #14 #16 #17 |
-| 3 | — | #18 #19 #21 #22 #23 #24 #25 |
+| 3 | #23 (#18 partial) | #18 (rest) #19 #21 #22 #24 #25 |
 
-Tier 1 complete. Playground polish batch (Tier 2 #7, #9, #10, #11, #12) also
-shipped on this branch. The recommended next moves are scoped above under
-"Next up — recommended".
+Tier 1 complete. Playground polish batch (Tier 2 #7, #9, #10, #11, #12)
+shipped. Tier 3 #23 (HeroDemo two-triples) shipped. `InteractiveExplainer`
+deleted out of #18; the remaining unused-component cleanup (MetricCard,
+DemoScriptModal) is still open.

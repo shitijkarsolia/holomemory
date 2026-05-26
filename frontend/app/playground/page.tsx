@@ -4,7 +4,6 @@ import { HrrLab } from "@/components/playground/hrr-lab";
 import { MemoryPlayground } from "@/components/playground/memory-playground";
 import { RecallDuel } from "@/components/playground/recall-duel";
 import { DistortionLab } from "@/components/playground/distortion-lab";
-import { InteractiveExplainer } from "@/components/playground/interactive-explainer";
 
 export const metadata: Metadata = {
   title: "HRR Playground — bind, unbind, and break the algebra",
@@ -36,7 +35,6 @@ export default function PlaygroundPage() {
       <MemoryPlayground />
       <RecallDuel />
       <DistortionLab />
-      <InteractiveExplainer />
     </div>
   );
 }

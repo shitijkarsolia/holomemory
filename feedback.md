@@ -164,9 +164,6 @@ purpose. Same for `NoiseDemo` (9 × 5). The sweeps already chunk with
 search-as-you-type combobox using `dropdown-menu.tsx` or `select.tsx` so any
 memory in the field can be contradicted. Effort: **S**.
 
-**15. ⊘ `/experiments` has hard-coded `num_queries=10`.** *Stale — the
-`/experiments` route was deleted on `ui/cleanup-and-fft-interactive`.*
-
 **16. ↻ Stats sidebar (re-targeted).** *Original targets (`/memories`,
 `/experiments`) are gone. The idea still applies if you want a small live
 counter on `/playground` — `api.stats()` is implemented and `MetricCard`
@@ -213,9 +210,6 @@ memory objects in a UI component (lines 25–87) is a smell. Move to
 `lib/demo-data.ts` next to `DEMO_FACTS`. The hero already imports `api`; the
 seed file already exists. Effort: **XS**.
 
-**20. ⊘ `/memories` editor.** *Stale — the `/memories` route was deleted on
-`ui/cleanup-and-fft-interactive`.*
-
 **21. Memory playground at `lg:` is too tight in the middle.**
 `lg:grid-cols-[360px_1fr_360px]` puts the field in a ~300px middle column at
 exactly 1024px viewport. The `viewBox` is 600×400. Either widen the breakpoint
@@ -259,37 +253,9 @@ count, push to a Web Worker or chunk with `requestIdleCallback`. Effort:
 
 - **`InteractiveExplainer`** unless it gets repurposed to drive the engine
   live (Tier 3 #18).
-- **The `/about` comparison table** if you keep `ComparisonSection` on the
-  homepage. Two tables that disagree about what the comparison is hurts more
-  than one table that's missing.
 - **The 28 hardcoded `EXTRA_SEED` facts in `playground/hero-section.tsx`** —
   at least move them out (Tier 3 #19); if the playground feels too dense
   after seeding, drop ~10.
-- **The kind/status/source native `<select>`s on `/memories`** if you adopt
-  the Tier 1 #1 cleanup; replace with the shadcn `Select` primitive that's
-  already imported.
-
----
-
-## Suggested order of operations
-
-If I were applying these myself, I'd batch:
-
-1. **One pass of brand-consistency** — Tier 1 #1, #3, plus the dead-code
-   delete in Tier 3 #18. The whole app then looks like one app, which is the
-   highest single-PR ROI.
-2. **Nav + footer** — Tier 1 #2, #4, plus Tier 2 #6 and #7. Site stops
-   feeling unfinished.
-3. **Memory field as an instrument** — Tier 2 #8 + Tier 1 #3 together. This
-   is the single biggest "wait, that's nice" moment a reviewer will get on
-   the playground.
-4. **Polish & honesty** — Tier 2 #9, #10, #11, #12, #15, plus Tier 3 #23,
-   #24. Each is small, together they read as "the engineer cared."
-5. **Editor & restructure** — Tier 3 #20, #21 if `/memories` is meant to be
-   a real surface; otherwise rename and ship.
-
-The whole list is roughly two days of focused work, with Tier 1 a half-day
-and the highest single-day return.
 
 ---
 
@@ -413,11 +379,11 @@ Effort: **M**. File: `components/playground/memory-field.tsx`.
 
 ## Status summary
 
-| Tier | Done | Stale (route deletion) | Open |
-|---|---|---|---|
-| 1 | #1 #2 #3 #4 #5 | — | — |
-| 2 | — | #15 (#16 re-targeted) | #6 #7 #8 #9 #10 #11 #12 #13 #14 #17 |
-| 3 | — | #20 | #18 #19 #21 #22 #23 #24 #25 |
+| Tier | Done | Open |
+|---|---|---|
+| 1 | #1 #2 #3 #4 #5 | — |
+| 2 | — | #6 #7 #8 #9 #10 #11 #12 #13 #14 #16 #17 |
+| 3 | — | #18 #19 #21 #22 #23 #24 #25 |
 
 Tier 1 is complete. Everything else is open for a later pass; the recommended
 batch above takes the highest-leverage Tier 2 items.

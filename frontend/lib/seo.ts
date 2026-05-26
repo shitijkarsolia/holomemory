@@ -28,6 +28,6 @@ export const SITE_KEYWORDS = [
 ];
 
 export const SITE_AUTHOR = {
-  name: "Shitij Karsolia",
+  name: "Shitij Mathur",
   url: "https://github.com/shitijkarsolia",
 };

@@ -207,14 +207,12 @@ at 390px. Switch to a single column on `<sm` with each labeled
 `subject/predicate/object`. Same for the main triple inputs above. Effort:
 **XS**.
 
-**23. ✅ `HeroDemo` honesty gap.** *Done — the hero now encodes both clauses
-of the example sentence. Two triples (sharing the `Sarah` subject) decompose
-side-by-side, six bind strips render grouped by fact, and the combined trace
-weights the subject signal twice to honor the math (it's bound in both
-facts). The probe answer recovers `Sarah` plus `login flow` from the second
-clause, which actually demonstrates the "many facts in one trace" claim the
-page keeps making. The two `r_s ⊛ Sarah` strips are visually identical on
-purpose — same role + same value → same vector.*
+**23. `HeroDemo` honesty gap.** The fact text reads "Sarah owns the auth
+service **and maintains the login flow**", but only the first clause's triple
+is shown. Either trim the fact to "Sarah owns the auth service.", or render
+*two* triples (the second `Sarah / maintains / login flow`) to match. The
+bind/superpose path then has 6 strips, which actually reinforces the "many
+facts in one trace" claim. Effort: **S**.
 
 **24. `prefer-reduced-motion` coverage of the probe-sweep.** `globals.css`
 zeros `.probe-sweep` animation correctly. Verify Framer Motion's per-component
@@ -339,18 +337,10 @@ Verification: `tsc --noEmit` clean. Lint count unchanged at 21 (same
 pre-existing errors in `memory-field.tsx`'s `NodeTooltip` and
 `lib/hrr/hrr.ts`'s `gaussianNoise`); the batch added zero new errors.
 
-### HeroDemo two-triples + delete `InteractiveExplainer` (same branch)
+### Delete `InteractiveExplainer` (same branch)
 
-Shipped Tier 3 #23 and the `InteractiveExplainer` half of Tier 3 #18:
+Shipped the `InteractiveExplainer` half of Tier 3 #18:
 
-- **#23** — `components/explainer/hero-demo.tsx` now renders two triples
-  sharing the `Sarah` subject. Decompose section shows `fact 1` and `fact 2`
-  blocks side-by-side; bind section renders six strips grouped by fact (the
-  two `r_s ⊛ Sarah` strips are visually identical on purpose to demonstrate
-  determinism); the combined trace double-weights the subject hash to honor
-  the math (subject is bound in both facts); probe answer recovers `Sarah` +
-  `login flow`. The hero now actually demonstrates the "many facts in one
-  trace" claim the page keeps making.
 - **#18 (partial)** — `components/playground/interactive-explainer.tsx`
   deleted. Import + render dropped from `app/playground/page.tsx`. The
   homepage `AlgebraSection` is now the single explainer for the three
@@ -383,9 +373,9 @@ Verification: `tsc --noEmit` clean. Lint count unchanged at 21.
 ## Next up — recommended
 
 The original "playground polish" batch (Tier 2 #7, #9, #10, #11, #12) shipped
-on this branch, then Tier 3 #23 (HeroDemo two-triples) and Tier 3 #18 + #19
-(cleanup pass). At this point the high-leverage items in Tier 1, the
-playground polish, and the codebase tidy-up are all done.
+on this branch, then Tier 3 #18 + #19 (cleanup pass). At this point the
+high-leverage items in Tier 1, the playground polish, and the codebase
+tidy-up are all done.
 
 What's left is small and optional:
 
@@ -400,6 +390,8 @@ What's left is small and optional:
   field isn't squeezed at 1024px.
 - **Tier 3 #22** — single-column on `<sm` for the HRR Lab unbind distractor
   inputs.
+- **Tier 3 #23** — render both clauses of the example sentence in `HeroDemo`
+  (two triples), or trim the fact text to the single clause shown.
 - **Tier 3 #24** — skip the `EncodeBlock` 6-second timed reveal under
   `prefers-reduced-motion`.
 - **Tier 3 #25** — push `useForceLayout`'s 60-iteration O(n²) repulsion into
@@ -418,9 +410,9 @@ Pick by appetite. None of these are blockers.
 |---|---|---|---|
 | 1 | #1 #2 #3 #4 #5 | — | — |
 | 2 | #7 #9 #10 #11 #12 | #8 | #6 #13 #14 #16 #17 |
-| 3 | #18 #19 #23 | — | #21 #22 #24 #25 |
+| 3 | #18 #19 | — | #21 #22 #23 #24 #25 |
 
 Tier 1 done. Playground polish batch (Tier 2 #7, #9, #10, #11, #12) done.
-HeroDemo two-triples (Tier 3 #23) and the codebase cleanup (Tier 3 #18,
-#19) done. Tier 2 #8 (MemoryField as instrument) parked at the author's
-request. Remaining items are small polish and optimization.
+The codebase cleanup (Tier 3 #18, #19) done. Tier 2 #8 (MemoryField as
+instrument) parked at the author's request. Remaining items are small polish
+and optimization.

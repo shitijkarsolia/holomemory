@@ -1,15 +1,11 @@
 "use client";
 
 const FACT = "Sarah owns the auth service and maintains the login flow.";
-
-// Two triples that share a subject. The page's headline claim is "many facts
-// in one trace"; this hero now actually demonstrates two facts entering the
-// same vector instead of waving at the second clause and only encoding the
-// first.
-const TRIPLES = [
-  { subject: "Sarah", predicate: "owns", object: "auth service" },
-  { subject: "Sarah", predicate: "maintains", object: "login flow" },
-];
+const TRIPLE = {
+  subject: "Sarah",
+  predicate: "owns",
+  object: "auth service",
+};
 
 const STRIP_CELLS = 36;
 const TRACE_CELLS = 64;
@@ -34,9 +30,8 @@ function oklch(color: SignalColor, alpha = 1): string {
 // and visually indistinguishable cell-to-cell, which defeats the figure's
 // pedagogical purpose. A hash of (role, value) gives deterministic, visually
 // distinct stripes per fact while preserving the "deterministic per input"
-// property HRR has — which is also why the two `r_s ⊛ Sarah` strips below
-// look identical: same role + same value → same vector. If you want real HRR
-// in the strips, replace `bindingAmplitudes` with:
+// property HRR has. If you want real HRR in the strips, replace
+// `bindingAmplitudes` with:
 //   const v = bind(symbolVector(`__ROLE_${role.toUpperCase()}__`),
 //                  symbolVector(value.toLowerCase()));
 //   then downsample 1024 -> n with abs() + window-average and perceptually
@@ -112,49 +107,25 @@ function Pill({
   );
 }
 
-function FactLabel({ index }: { index: number }) {
-  return (
-    <p className="ml-[68px] mb-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground/70">
-      fact {index + 1}
-    </p>
-  );
-}
-
 export function HeroDemo() {
-  const factAmps = TRIPLES.map((t) => ({
-    subj: bindingAmplitudes("subj", t.subject, STRIP_CELLS),
-    pred: bindingAmplitudes("pred", t.predicate, STRIP_CELLS),
-    obj: bindingAmplitudes("obj", t.object, STRIP_CELLS),
-  }));
+  const subjAmps = bindingAmplitudes("subj", TRIPLE.subject, STRIP_CELLS);
+  const predAmps = bindingAmplitudes("pred", TRIPLE.predicate, STRIP_CELLS);
+  const objAmps = bindingAmplitudes("obj", TRIPLE.object, STRIP_CELLS);
 
-  // Combined trace cells. Five distinct bindings contribute, but the subject
-  // appears in both facts so we double-weight its hash — which makes amber
-  // visibly more present in the trace, honoring the math: bind(SUBJECT, Sarah)
-  // is added twice when both fact triples are summed.
   const traceCells = Array.from({ length: TRACE_CELLS }, (_, i) => {
-    const sBase = hash(`subj::${TRIPLES[0].subject}`, i);
-    const p1 = hash(`pred::${TRIPLES[0].predicate}`, i);
-    const o1 = hash(`obj::${TRIPLES[0].object}`, i);
-    const p2 = hash(`pred::${TRIPLES[1].predicate}`, i);
-    const o2 = hash(`obj::${TRIPLES[1].object}`, i);
-    const sWeighted = sBase * 2;
-
-    const max = Math.max(sWeighted, p1, o1, p2, o2);
+    const s = hash(`subj::${TRIPLE.subject}`, i);
+    const p = hash(`pred::${TRIPLE.predicate}`, i);
+    const o = hash(`obj::${TRIPLE.object}`, i);
+    const max = Math.max(s, p, o);
     const color =
-      max === sWeighted
-        ? SIGNAL.amber
-        : max === p1 || max === p2
-          ? SIGNAL.blue
-          : SIGNAL.violet;
-
-    // Average over 6 unit-contributions (subject counted twice).
-    const amplitude = 0.25 + ((sWeighted + p1 + o1 + p2 + o2) / 6) * 0.7;
+      max === s ? SIGNAL.amber : max === p ? SIGNAL.blue : SIGNAL.violet;
+    const amplitude = 0.25 + ((s + p + o) / 3) * 0.7;
     return { color: oklch(color), amplitude };
   });
 
   return (
     <figure
-      aria-label="Diagram: a sentence with two clauses decomposes into two subject/predicate/object triples that share a subject. Each role binds to its value, all six bindings superpose into a single 1024-dimensional trace, and an algebraic probe recovers the subject of the question and the matching object — the second clause's value."
+      aria-label="Diagram: a sentence decomposes into a subject/predicate/object triple, each role is bound to its value, the three bindings superpose into one 1024-dimensional trace, and an algebraic probe recovers the answer."
       className="demo-panel relative w-full p-6 sm:p-7"
     >
       <header className="flex items-baseline justify-between">
@@ -167,59 +138,27 @@ export function HeroDemo() {
       </header>
 
       <div className="mt-5 rounded-md border border-border bg-card/60 px-4 py-3">
-        <p className="marginalia-label">fact · two clauses</p>
+        <p className="marginalia-label">fact</p>
         <p className="mt-1 text-[15px] leading-snug text-foreground">{FACT}</p>
       </div>
 
-      <Operator label="decompose · two triples, shared subject" />
+      <Operator label="decompose" />
 
-      <div className="space-y-3">
-        {TRIPLES.map((triple, idx) => (
-          <div key={idx}>
-            <FactLabel index={idx} />
-            <div className="grid grid-cols-[68px_1fr] gap-x-3 gap-y-1.5 text-sm">
-              <span className="marginalia-label self-center text-right">
-                subject
-              </span>
-              <Pill color={SIGNAL.amber}>{triple.subject}</Pill>
-              <span className="marginalia-label self-center text-right">
-                predicate
-              </span>
-              <Pill color={SIGNAL.blue}>{triple.predicate}</Pill>
-              <span className="marginalia-label self-center text-right">
-                object
-              </span>
-              <Pill color={SIGNAL.violet}>{triple.object}</Pill>
-            </div>
-          </div>
-        ))}
+      <div className="grid grid-cols-[68px_1fr] gap-x-3 gap-y-1.5 text-sm">
+        <span className="marginalia-label self-center text-right">subject</span>
+        <Pill color={SIGNAL.amber}>{TRIPLE.subject}</Pill>
+        <span className="marginalia-label self-center text-right">predicate</span>
+        <Pill color={SIGNAL.blue}>{TRIPLE.predicate}</Pill>
+        <span className="marginalia-label self-center text-right">object</span>
+        <Pill color={SIGNAL.violet}>{TRIPLE.object}</Pill>
       </div>
 
       <Operator label="bind  ⊛" />
 
-      <div className="space-y-3">
-        {TRIPLES.map((_, idx) => (
-          <div key={idx}>
-            <FactLabel index={idx} />
-            <div className="space-y-1.5">
-              <Strip
-                amplitudes={factAmps[idx].subj}
-                color={SIGNAL.amber}
-                label="r_s ⊛ v_s"
-              />
-              <Strip
-                amplitudes={factAmps[idx].pred}
-                color={SIGNAL.blue}
-                label="r_p ⊛ v_p"
-              />
-              <Strip
-                amplitudes={factAmps[idx].obj}
-                color={SIGNAL.violet}
-                label="r_o ⊛ v_o"
-              />
-            </div>
-          </div>
-        ))}
+      <div className="space-y-1.5">
+        <Strip amplitudes={subjAmps} color={SIGNAL.amber} label="r_s ⊛ v_s" />
+        <Strip amplitudes={predAmps} color={SIGNAL.blue} label="r_p ⊛ v_p" />
+        <Strip amplitudes={objAmps} color={SIGNAL.violet} label="r_o ⊛ v_o" />
       </div>
 
       <Operator label="superpose  +" />
@@ -249,7 +188,7 @@ export function HeroDemo() {
         </div>
       </div>
       <p className="ml-[80px] mt-1.5 font-mono text-[10px] text-muted-foreground/70">
-        {TRACE_CELLS}-cell preview · both facts in one {TRACE_DIMS}-d vector
+        {TRACE_CELLS}-cell preview of one {TRACE_DIMS}-d vector
       </p>
 
       <Operator label="probe" />
@@ -271,14 +210,14 @@ export function HeroDemo() {
           &ldquo;Who handles login?&rdquo;
           <span className="text-muted-foreground"> → </span>
           <span className="font-medium" style={{ color: oklch(SIGNAL.amber) }}>
-            {TRIPLES[0].subject}
+            {TRIPLE.subject}
           </span>
           <span className="text-muted-foreground"> · </span>
           <span
             className="font-medium"
             style={{ color: oklch(SIGNAL.violet) }}
           >
-            {TRIPLES[1].object}
+            {TRIPLE.object}
           </span>
         </p>
       </div>

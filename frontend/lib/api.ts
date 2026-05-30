@@ -9,7 +9,14 @@ import type {
 } from "./types";
 import { ClientEngine } from "./hrr";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+const CONFIGURED_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const BASE_URL = CONFIGURED_BASE_URL || "http://localhost:8000";
+
+// When no backend URL is configured (the default for the public Vercel deploy),
+// the app is intentionally backendless: the TypeScript HRR engine in lib/hrr/
+// runs every demo in the browser. Skip the health probe entirely in that case so
+// visitors never incur a failed fetch to localhost:8000 or a 2s timeout.
+export const HAS_BACKEND = Boolean(CONFIGURED_BASE_URL);
 
 let backendStatus: "unknown" | "available" | "unavailable" = "unknown";
 let lastCheck = 0;
@@ -17,6 +24,7 @@ const CHECK_INTERVAL = 30_000;
 const HEALTH_TIMEOUT = 2000;
 
 async function checkBackend(): Promise<boolean> {
+  if (!HAS_BACKEND) return false;
   const now = Date.now();
   if (backendStatus !== "unknown" && now - lastCheck < CHECK_INTERVAL) {
     return backendStatus === "available";

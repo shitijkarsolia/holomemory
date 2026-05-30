@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { api, HAS_BACKEND } from "@/lib/api";
 import { EXTRA_SEED } from "@/lib/demo-data";
 import { useState } from "react";
 
@@ -63,6 +63,16 @@ export function HeroSection() {
               the homepage. Seed the lab to load example memories you can
               teach against, query, and disturb.
             </p>
+
+            {!HAS_BACKEND && (
+              <p className="mt-5 flex items-center gap-2 font-mono text-[11.5px] uppercase tracking-[0.12em] text-muted-foreground/80">
+                <span
+                  aria-hidden="true"
+                  className="inline-block h-1.5 w-1.5 rounded-full bg-[color:var(--signal-amber)]"
+                />
+                Runs entirely in your browser · no backend, no API calls
+              </p>
+            )}
 
             <div className="mt-7 flex flex-wrap items-center gap-3">
               <button

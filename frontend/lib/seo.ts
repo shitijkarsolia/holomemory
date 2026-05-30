@@ -1,8 +1,18 @@
-export const SITE_NAME = "HoloMem";
+export const SITE_NAME = "HoloMemory";
+
+// Canonical production origin. An explicit NEXT_PUBLIC_SITE_URL always wins.
+// Otherwise: on Vercel production builds, pin to the stable project domain so
+// canonical/OG/sitemap never point at the per-deploy *.vercel.app hostname;
+// on preview builds fall back to that deploy's own VERCEL_URL; locally, localhost.
+const PRODUCTION_URL = "https://holomemory.vercel.app";
 
 export const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ??
-  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+  (process.env.VERCEL_ENV === "production"
+    ? PRODUCTION_URL
+    : process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "http://localhost:3000");
 
 export const SITE_TAGLINE = "Holographic Reduced Representations, explained";
 

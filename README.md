@@ -169,9 +169,7 @@ node scripts/screenshot.mjs         # in another, from the repo root
 |---|---|
 | `/` | HRR explainer. Hero, the four operations, algebra, the canonical unbind demo, an applied example (encode/recall/trust), and an honest comparison with RAG, vector DBs, and keyword search. |
 | `/playground` | HRR Lab (four interactives), then the memory playground: teach facts, inspect the memory field, recall, recall duel, distortion lab. |
-| `/experiments` | Synthetic benchmark runs comparing keyword, holographic, and hybrid retrieval. |
-| `/memories` | Browse, filter, and inspect stored memories. |
-| `/about` | Technical explainer for engineers who want the details. |
+| `/about` | Technical explainer for engineers who want the details, plus a small interactive that exposes the FFT under `bind`. |
 
 ## API examples
 

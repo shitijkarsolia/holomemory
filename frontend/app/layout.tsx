@@ -3,6 +3,7 @@ import { IBM_Plex_Mono, Source_Sans_3, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { TopNav } from "@/components/top-nav";
+import { SiteFooter } from "@/components/site-footer";
 import {
   SITE_AUTHOR,
   SITE_DESCRIPTION,
@@ -133,9 +134,18 @@ export default function RootLayout({
       className={`${sourceSans.variable} ${sourceSerif.variable} ${plexMono.variable} h-full antialiased`}
     >
       <body className="min-h-full bg-background text-foreground font-sans">
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-primary-foreground focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-ring/50"
+        >
+          Skip to main content
+        </a>
         <Providers>
           <TopNav />
-          <main className="pt-16">{children}</main>
+          <main id="main" className="pt-16">
+            {children}
+          </main>
+          <SiteFooter />
         </Providers>
         <script
           type="application/ld+json"

@@ -6,13 +6,23 @@ import { api } from "@/lib/api";
 import type { FieldResponse, Memory } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Waveform, Warning, Trash } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function DistortionLab() {
   const queryClient = useQueryClient();
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
+  const [resetOpen, setResetOpen] = useState(false);
 
   const { data } = useQuery<FieldResponse>({
     queryKey: ["field"],
@@ -27,6 +37,11 @@ export function DistortionLab() {
     setTimeout(() => setFeedback(null), 3000);
   };
 
+  const showError = (err: unknown, fallback: string) => {
+    const msg = err instanceof Error ? err.message : fallback;
+    setErrorMsg(msg);
+  };
+
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ["field"] });
     queryClient.invalidateQueries({ queryKey: ["memories"] });
@@ -35,26 +50,36 @@ export function DistortionLab() {
 
   const noiseMutation = useMutation({
     mutationFn: () => api.noise(3),
+    onMutate: () => setErrorMsg(null),
     onSuccess: (data) => {
       invalidateAll();
       showFeedback(`Injected ${data.memories_created} noise memories`);
     },
+    onError: (err) => showError(err, "Couldn't inject noise."),
   });
 
   const contradictionMutation = useMutation({
     mutationFn: (id: string) => api.contradiction(id),
+    onMutate: () => setErrorMsg(null),
     onSuccess: () => {
       invalidateAll();
       setSelectedMemory(null);
       showFeedback("Contradiction created. Watch trust scores shift.");
     },
+    onError: (err) => showError(err, "Couldn't create contradiction."),
   });
 
   const resetMutation = useMutation({
     mutationFn: () => api.reset(),
+    onMutate: () => setErrorMsg(null),
     onSuccess: () => {
       invalidateAll();
+      setResetOpen(false);
       showFeedback("All memories cleared");
+    },
+    onError: (err) => {
+      setResetOpen(false);
+      showError(err, "Couldn't reset the field.");
     },
   });
 
@@ -156,8 +181,8 @@ export function DistortionLab() {
               Wipe all memories, vectors, and symbols. Start fresh.
             </p>
             <Button
-              onClick={() => resetMutation.mutate()}
-              disabled={resetMutation.isPending}
+              onClick={() => setResetOpen(true)}
+              disabled={resetMutation.isPending || memories.length === 0}
               size="sm"
               variant="outline"
               className="w-full border-border/50"
@@ -166,6 +191,18 @@ export function DistortionLab() {
             </Button>
           </div>
         </div>
+
+        {errorMsg && (
+          <div className="mt-5 rounded-md border border-[color:var(--signal-red)]/30 bg-[color:var(--signal-red)]/5 px-4 py-3 text-[13px] text-foreground/85">
+            {errorMsg}
+            <button
+              onClick={() => setErrorMsg(null)}
+              className="ml-3 text-xs text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
 
         <AnimatePresence>
           {feedback && (
@@ -185,6 +222,39 @@ export function DistortionLab() {
           )}
         </AnimatePresence>
       </div>
+
+      <Dialog open={resetOpen} onOpenChange={setResetOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Clear the memory field?</DialogTitle>
+            <DialogDescription>
+              This permanently deletes all{" "}
+              <span className="font-mono text-foreground/85">
+                {memories.length}
+              </span>{" "}
+              memories, their stored vectors, and the symbol table. The action
+              cannot be undone — you&rsquo;ll need to re-seed or teach
+              memories from scratch.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setResetOpen(false)}
+              disabled={resetMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => resetMutation.mutate()}
+              disabled={resetMutation.isPending}
+            >
+              {resetMutation.isPending ? "Clearing…" : "Clear all memories"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }

@@ -1,22 +1,23 @@
 import type { Metadata } from "next";
+import { FftBinding } from "@/components/explainer/fft-binding";
 
 export const metadata: Metadata = {
-  title: "About — how HRR works under the hood",
+  title: "About — what FFT does inside bind",
   description:
-    "Holographic memory in detail: symbol vectors, binding by circular convolution, superposition, and the unbind-then-cleanup retrieval cycle behind HoloMem. Written for engineers who want the math, not the marketing.",
+    "The single piece the homepage waves at without showing: the FFT-based circular convolution under HRR's bind operation. Type two symbols, watch every step run live in the browser engine.",
   alternates: { canonical: "/about" },
   openGraph: {
-    title: "About HoloMem — how HRR works under the hood",
+    title: "About HoloMem — what FFT does inside bind",
     description:
-      "Symbol vectors, binding by circular convolution, superposition, and the unbind-then-cleanup retrieval cycle behind HoloMem.",
+      "An interactive that exposes the FFT under bind(r, v): the time-domain vectors, their magnitude spectra, the pointwise product, and the inverse FFT.",
     url: "/about",
     type: "article",
   },
   twitter: {
     card: "summary_large_image",
-    title: "About HoloMem — how HRR works",
+    title: "About HoloMem — what FFT does inside bind",
     description:
-      "Symbol vectors, binding by circular convolution, superposition, and the unbind-then-cleanup retrieval cycle.",
+      "An interactive that exposes the FFT under bind(r, v).",
   },
 };
 
@@ -29,150 +30,75 @@ export default function AboutPage() {
           About HoloMem
         </h1>
         <p className="mt-4 text-[16px] leading-relaxed text-muted-foreground">
-          How holographic memory works, for engineers who want the details.
+          The homepage walks through HRR conceptually. This page shows the
+          one piece the homepage waves at without showing: the FFT-based
+          circular convolution under{" "}
+          <code className="font-mono text-[14.5px] text-foreground/85">
+            bind
+          </code>
+          .
         </p>
       </header>
 
-      <section className="space-y-4 border-t border-border/30 pt-12">
+      <section className="border-t border-border/30 pt-12">
         <h2 className="font-serif text-2xl sm:text-3xl leading-tight tracking-tight text-foreground">
-          What is holographic memory?
+          Inside the binding operation
         </h2>
-        <p className="text-[16px] leading-relaxed text-muted-foreground">
-          Holographic memory is a brain-inspired way to store and retrieve
-          information. Instead of indexing memories by keys or keywords, each
-          memory becomes a high-dimensional vector trace built from a few
-          algebraic operations. To retrieve, you construct a probe vector and
-          find the stored traces most similar to it. It&rsquo;s an
-          approximate, content-addressable lookup, not an exact database
-          query.
+        <p className="mt-4 text-[16px] leading-relaxed text-muted-foreground">
+          Binding is three steps in the frequency domain: take the FFT of
+          both vectors, multiply pointwise as complex numbers, then inverse
+          FFT. The result is a new unit-norm vector that looks nothing like
+          either input but is invertible given one of them. The figure below
+          runs all three steps live on whatever symbols you type — same code
+          path the production engine uses for every memory in the
+          playground.
         </p>
-      </section>
-
-      <section className="space-y-4 border-t border-border/30 pt-12 mt-12">
-        <h2 className="font-serif text-2xl sm:text-3xl leading-tight tracking-tight text-foreground">
-          HRR operations
-        </h2>
-        <p className="text-[16px] leading-relaxed text-muted-foreground">
-          Holographic Reduced Representations (HRR) use three core operations
-          to pack structured knowledge into fixed-size vectors.
-        </p>
-        <div className="mt-6 space-y-4">
-          <article className="rounded-lg border border-border/40 bg-card/30 p-5">
-            <h3 className="font-serif text-[20px] tracking-tight text-foreground">
-              Symbol vectors
-            </h3>
-            <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
-              Each concept gets a unique 1024-dimensional vector, generated
-              deterministically from its name. Unrelated symbols come out
-              nearly orthogonal.
-            </p>
-          </article>
-
-          <article className="rounded-lg border border-border/40 bg-card/30 p-5">
-            <h3 className="font-serif text-[20px] tracking-tight text-foreground">
-              Binding (circular convolution)
-            </h3>
-            <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
-              Associates two concepts. bind(SUBJECT, &ldquo;user&rdquo;)
-              produces a vector representing &ldquo;the subject is
-              user&rdquo;. Implemented via FFT. The result looks dissimilar
-              to both inputs.
-            </p>
-          </article>
-
-          <article className="rounded-lg border border-border/40 bg-card/30 p-5">
-            <h3 className="font-serif text-[20px] tracking-tight text-foreground">
-              Superposition (addition)
-            </h3>
-            <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
-              Multiple bindings are summed into a single trace vector. All
-              associations live in one fixed-size vector. Lossy, but
-              approximately recoverable.
-            </p>
-          </article>
-
-          <article className="rounded-lg border border-border/40 bg-card/30 p-5">
-            <h3 className="font-serif text-[20px] tracking-tight text-foreground">
-              Unbinding (circular correlation)
-            </h3>
-            <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
-              Given a trace and a key, recovers the bound value
-              approximately. Cleanup memory maps the noisy result back to
-              the nearest known symbol.
-            </p>
-          </article>
+        <div className="mt-8">
+          <FftBinding />
         </div>
       </section>
 
-      <section className="space-y-4 border-t border-border/30 pt-12 mt-12">
+      <section className="border-t border-border/30 pt-12 mt-16">
         <h2 className="font-serif text-2xl sm:text-3xl leading-tight tracking-tight text-foreground">
           Retrieval modes
         </h2>
-        <ul className="space-y-2 text-[15.5px] leading-relaxed text-muted-foreground">
+        <p className="mt-4 text-[15.5px] leading-relaxed text-muted-foreground">
+          The applied memory system on the homepage and playground exposes
+          three retrieval modes against the same store of traces.
+        </p>
+        <ul className="mt-5 space-y-3 text-[15px] leading-relaxed text-muted-foreground">
           <li>
-            <span className="font-medium text-foreground">Keyword:</span>{" "}
-            Token overlap scoring (baseline).
+            <span className="font-medium text-foreground">Keyword.</span>{" "}
+            Token overlap scoring against a stemmed bag of words. Stems are
+            computed with Snowball English and kept byte-identical between
+            the Python and TypeScript implementations by{" "}
+            <code className="font-mono text-[13.5px] text-foreground/85">
+              scripts/parity_check.mjs
+            </code>
+            .
           </li>
           <li>
-            <span className="font-medium text-foreground">Holographic:</span>{" "}
-            Cosine similarity between probe and trace vectors.
+            <span className="font-medium text-foreground">Holographic.</span>{" "}
+            Cosine similarity between a probe vector built from the query
+            and each stored trace. Trust is not factored in for this mode,
+            so stale or low-trust memories can win on raw vector overlap.
           </li>
           <li>
-            <span className="font-medium text-foreground">Hybrid:</span>{" "}
-            Weighted combination of holographic 40%, keyword 30%, trust 15%,
-            entity overlap 15%.
+            <span className="font-medium text-foreground">Hybrid.</span>{" "}
+            <code className="font-mono text-[13.5px] text-foreground/85">
+              0.4·H + 0.3·K + 0.15·T + 0.15·E
+            </code>{" "}
+            — holographic, keyword, trust, and entity overlap. Same weights
+            on both sides of the parity check.
           </li>
         </ul>
       </section>
 
-      <section className="space-y-4 border-t border-border/30 pt-12 mt-12">
-        <h2 className="font-serif text-2xl sm:text-3xl leading-tight tracking-tight text-foreground">
-          Tradeoffs vs vector DB / RAG
-        </h2>
-        <div className="overflow-x-auto rounded-md border border-border/40 bg-card/30">
-          <table className="w-full text-left text-[14px]">
-            <thead>
-              <tr className="border-b border-border/50">
-                <th className="px-4 py-3 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
-                  Aspect
-                </th>
-                <th className="px-4 py-3 font-mono text-[11px] uppercase tracking-wider text-[color:var(--signal-amber)]">
-                  HRR
-                </th>
-                <th className="px-4 py-3 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
-                  Vector DB + RAG
-                </th>
-              </tr>
-            </thead>
-            <tbody className="text-foreground/85">
-              {[
-                ["Embedding", "Deterministic, no ML model", "Requires embedding model"],
-                ["Structure", "Encodes roles and relations", "Flat semantic similarity"],
-                ["Scale", "Prototype (hundreds)", "Production (millions)"],
-                ["Dependencies", "NumPy + SQLite", "External services, API keys"],
-                ["Explainability", "Component scores, matched symbols", "Opaque similarity score"],
-              ].map((row, i, arr) => (
-                <tr
-                  key={row[0]}
-                  className={i === arr.length - 1 ? "" : "border-b border-border/40"}
-                >
-                  <td className="px-4 py-2.5 font-medium text-foreground">
-                    {row[0]}
-                  </td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{row[1]}</td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{row[2]}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section className="space-y-4 border-t border-border/30 pt-12 mt-12">
+      <section className="border-t border-border/30 pt-12 mt-16">
         <h2 className="font-serif text-2xl sm:text-3xl leading-tight tracking-tight text-foreground">
           Tech stack
         </h2>
-        <div className="grid gap-5 sm:grid-cols-2 text-[15px] leading-relaxed text-muted-foreground">
+        <div className="mt-5 grid gap-5 sm:grid-cols-2 text-[15px] leading-relaxed text-muted-foreground">
           <div>
             <p className="font-medium text-foreground">Backend</p>
             <p>FastAPI, SQLAlchemy, NumPy, SQLite</p>

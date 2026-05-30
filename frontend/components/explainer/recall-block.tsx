@@ -147,7 +147,7 @@ export function RecallBlock() {
       setResult(res);
     } catch {
       setQueryError(
-        "Query failed. The backend is not reachable. Try again once it is running.",
+        "Something went wrong running that query. Reload the page and try again.",
       );
     }
     setLoading(false);
@@ -182,9 +182,9 @@ export function RecallBlock() {
 
       {seedError && (
         <div className="mt-5 rounded-md border border-[color:var(--signal-red)]/30 bg-[color:var(--signal-red)]/5 px-4 py-3 text-[13px] text-foreground/85">
-          Couldn&rsquo;t reach the backend to seed memories. The block below
-          falls back to a client-side engine pre-loaded with the same demo
-          facts &mdash; queries still work.
+          Couldn&rsquo;t load the demo memories. Reload the page to try again.
+          You can still type a query below, though it won&rsquo;t have anything
+          to match against until the facts load.
         </div>
       )}
 

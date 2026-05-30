@@ -145,7 +145,7 @@ export function FftBinding() {
 
   return (
     <figure
-      aria-label="Interactive: two symbol vectors r and v, their FFT magnitude spectra, the pointwise product in the frequency domain, and the inverse FFT recovering the bound vector — exposing the math under bind(r, v)."
+      aria-label="Interactive: two symbol vectors r and v, their FFT magnitude spectra, the pointwise product in the frequency domain, and the inverse FFT recovering the bound vector, which exposes the math under bind(r, v)."
       className="demo-panel relative w-full p-6 sm:p-7"
     >
       <header className="flex items-baseline justify-between">
@@ -236,7 +236,7 @@ export function FftBinding() {
         <code className="font-mono text-[12.5px] text-foreground/85">
           |R ⊙ V|
         </code>{" "}
-        looks unrelated to either input spectrum — that&rsquo;s exactly why{" "}
+        looks unrelated to either input spectrum. That&rsquo;s exactly why{" "}
         <code className="font-mono text-[12.5px] text-foreground/85">
           bind(r, v)
         </code>{" "}

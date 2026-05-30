@@ -124,9 +124,9 @@ function CapacityFigure() {
       <p className="mt-2 max-w-xl text-[14px] leading-relaxed text-muted-foreground">
         Recall stays near-perfect to about{" "}
         <span className="text-foreground/90">50 superposed facts</span>, then
-        degrades smoothly. No per-fact slot, no index — the trace is always the
-        same 1024 floats. Representative curve; the lab runs the real sweep in
-        your browser.
+        degrades smoothly. There&rsquo;s no per-fact slot and no index. The
+        trace is always the same 1024 floats. This is a representative curve;
+        the lab runs the real sweep in your browser.
       </p>
       <svg
         viewBox={`0 0 ${W} ${H}`}

@@ -499,7 +499,7 @@ function RoleDemo() {
       <SectionHeader
         n="03"
         title="Roles vs. bags of words"
-        blurb='"Maya manages the auth service" and "The auth service manages Maya" contain identical tokens. Keyword scoring can’t tell them apart. Role-binding can.'
+        blurb={`"Maya manages the auth service" and "The auth service manages Maya" contain identical tokens. Keyword scoring can't tell them apart. Role-binding can.`}
       />
 
       <div className="grid gap-2 sm:grid-cols-2">

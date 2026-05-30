@@ -70,7 +70,7 @@ export function HeroSection() {
                   aria-hidden="true"
                   className="inline-block h-1.5 w-1.5 rounded-full bg-[color:var(--signal-amber)]"
                 />
-                Runs entirely in your browser · no backend, no API calls
+                Runs entirely in your browser. No backend, nothing to install.
               </p>
             )}
 

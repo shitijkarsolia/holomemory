@@ -171,7 +171,7 @@ export function EncodeBlock() {
       queryClient.invalidateQueries({ queryKey: ["field"] });
     } catch {
       setErrorMsg(
-        "Backend is not running. The demo above shows the same flow statically.",
+        "Something went wrong encoding that fact. Reload the page and try again.",
       );
       setPhase("error");
     }

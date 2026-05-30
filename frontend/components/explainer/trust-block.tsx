@@ -63,7 +63,7 @@ export function TrustBlock() {
       setPhase("done");
     } catch {
       setErrorMsg(
-        "Couldn't reach the backend to run the trust comparison. Start it and try again.",
+        "Something went wrong running the trust comparison. Reload the page and try again.",
       );
       setPhase("error");
     }

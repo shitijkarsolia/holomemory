@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     "The single piece the homepage waves at without showing: the FFT-based circular convolution under HRR's bind operation. Type two symbols, watch every step run live in the browser engine.",
   alternates: { canonical: "/about" },
   openGraph: {
-    title: "About HoloMem — what FFT does inside bind",
+    title: "About HoloMemory — what FFT does inside bind",
     description:
       "An interactive that exposes the FFT under bind(r, v): the time-domain vectors, their magnitude spectra, the pointwise product, and the inverse FFT.",
     url: "/about",
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "About HoloMem — what FFT does inside bind",
+    title: "About HoloMemory — what FFT does inside bind",
     description:
       "An interactive that exposes the FFT under bind(r, v).",
   },
@@ -27,7 +27,7 @@ export default function AboutPage() {
       <header className="mb-12">
         <p className="eyebrow">About this project</p>
         <h1 className="mt-3 font-serif text-3xl sm:text-4xl leading-[1.1] tracking-tight text-foreground">
-          About HoloMem
+          About HoloMemory
         </h1>
         <p className="mt-4 text-[16px] leading-relaxed text-muted-foreground">
           The homepage walks through HRR conceptually. This page shows the

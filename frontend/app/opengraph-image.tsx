@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const alt =
-  "HoloMem — Holographic Reduced Representations explained. Store structured facts inside a single fixed-size vector with bind, superpose, unbind, and cleanup.";
+  "HoloMemory — Holographic Reduced Representations explained. Store structured facts inside a single fixed-size vector with bind, superpose, unbind, and cleanup.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -48,7 +48,7 @@ export default function Image() {
               letterSpacing: "-0.01em",
             }}
           >
-            HoloMem
+            HoloMemory
           </div>
         </div>
 

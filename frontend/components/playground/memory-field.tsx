@@ -39,6 +39,21 @@ export function MemoryField({ highlightedIds = [], lastEncodedId }: Props) {
   );
   const hoveredPos = hoveredId ? positions.get(hoveredId) : null;
 
+  const fieldSummary = useMemo(() => {
+    if (memories.length === 0) return "Memory field is empty.";
+    const lowTrust = memories.filter(
+      (m) => typeof m.trust === "number" && m.trust < 0.3,
+    ).length;
+    const contradictions = memories.filter((m) =>
+      m.tags.includes("contradiction"),
+    ).length;
+    const parts = [`${memories.length} memory traces`];
+    if (lowTrust) parts.push(`${lowTrust} low-trust`);
+    if (contradictions) parts.push(`${contradictions} contradiction`);
+    parts.push(`${edges.length} shared-entity links`);
+    return `Memory field: ${parts.join(", ")}.`;
+  }, [memories, edges.length]);
+
   if (memories.length === 0) {
     return (
       <div className="flex h-full min-h-[440px] items-center justify-center rounded-xl border border-dashed border-border/40 bg-[oklch(0.09_0.012_75)]">
@@ -69,6 +84,8 @@ export function MemoryField({ highlightedIds = [], lastEncodedId }: Props) {
         viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
         className="h-full w-full"
         preserveAspectRatio="xMidYMid meet"
+        role="img"
+        aria-label={fieldSummary}
         onMouseLeave={() => setHoveredId(null)}
       >
         <defs>
@@ -133,6 +150,14 @@ export function MemoryField({ highlightedIds = [], lastEncodedId }: Props) {
                 exit={{ opacity: 0, scale: 0 }}
                 transition={{ type: "spring", stiffness: 200, damping: 20 }}
                 onMouseEnter={() => setHoveredId(mem.id)}
+                onFocus={() => setHoveredId(mem.id)}
+                onBlur={() => setHoveredId((cur) => (cur === mem.id ? null : cur))}
+                tabIndex={0}
+                role="button"
+                aria-label={`${mem.text} — trust ${trust.toFixed(2)}, source ${mem.source}${
+                  mem.tags.length ? `, tags ${mem.tags.join(", ")}` : ""
+                }`}
+                className="focus:outline-none [&:focus-visible_circle]:stroke-[color:var(--signal-amber)] [&:focus-visible_circle]:stroke-2"
                 style={{ cursor: "pointer" }}
               >
                 <circle
@@ -307,7 +332,7 @@ function FieldLegend({ total }: { total: number }) {
           shared entity
         </span>
         <span className="ml-auto hidden text-muted-foreground/60 sm:inline">
-          hover a node for details
+          hover or focus a node for details
         </span>
       </div>
     </>
